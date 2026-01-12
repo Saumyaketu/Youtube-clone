@@ -16,7 +16,7 @@ const Sidebar = () => {
     id: "1",
     name: "John",
     email: "john@example.com",
-    image: "https://github.com/shadcn/shadcn.png?height=32&width=32",
+    image: "https://github.com/shadcn.png?height=32&width=32",
   };
 
   return (
