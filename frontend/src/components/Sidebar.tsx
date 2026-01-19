@@ -62,24 +62,26 @@ const Sidebar = () => {
                   Watch later
                 </Button>
               </Link>
-              {user?.channelname ? (
+              {/* {user?.channelname ? ( */}
+              { (
                 <Link href={`/channel/${user.id}`}>
                   <Button variant="ghost" className="w-full justify-start">
                     <User className="w-5 h-5 mr-3" />
                     Your channel
                   </Button>
                 </Link>
-              ) : (
-                <div className="px-2 py-1.5">
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    className="w-full"
-                  >
-                    Create Channel
-                  </Button>
-                </div>
-              )}
+              // ) : (
+              //   <div className="px-2 py-1.5">
+              //     <Button
+              //       variant="secondary"
+              //       size="sm"
+              //       className="w-full"
+              //     >
+              //       Create Channel
+              //     </Button>
+              //   </div>
+              )
+              }
             </div>
           </>
         )}
