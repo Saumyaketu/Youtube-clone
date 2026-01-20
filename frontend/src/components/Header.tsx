@@ -1,6 +1,6 @@
 "use client";
 import { Bell, Menu, Mic, Search, User, VideoIcon } from "lucide-react";
-import React, { useState } from "react";
+import React, { FormEvent, useState } from "react";
 import { Button } from "./ui/button";
 import Link from "next/link";
 import { Input } from "./ui/input";
@@ -13,6 +13,7 @@ import {
 } from "./ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import ChannelDialogue from "./ChannelDialogue";
+import { useRouter } from "next/navigation";
 
 const Header = () => {
   const user: any = {
@@ -24,6 +25,14 @@ const Header = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [hasChannel, setHasChannel] = useState(false);
   const [isDialogueOpen, setisDialogueOpen] = useState(false);
+  const router = useRouter();
+
+  const handleSearch = (e: FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      router.push(`/search?query=${encodeURIComponent(searchQuery.trim())}`);
+    }
+  };
 
   return (
     <header className="flex items-center justify-between px-4 py-2 bg-white border-b">
@@ -42,7 +51,10 @@ const Header = () => {
         </Link>
       </div>
 
-      <form className="flex items-center gap-2 flex-1 max-w-2xl mx-4">
+      <form
+        onSubmit={handleSearch}
+        className="flex items-center gap-2 flex-1 max-w-2xl mx-4"
+      >
         <div className="flex flex-1">
           <Input
             type="search"
@@ -58,7 +70,7 @@ const Header = () => {
             <Search className="w-5 h-5" />
           </Button>
         </div>
-        <Button variant="ghost" className="rounded-full">
+        <Button type="button" variant="ghost" className="rounded-full">
           <Mic className="w-5 h-5" />
         </Button>
       </form>
