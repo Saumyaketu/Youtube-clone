@@ -25,14 +25,15 @@ interface WatchLaterItem {
   };
 }
 
-const WatchLaterContent = () => {
-  const user: any = {
-    id: "1",
-    name: "John",
-    email: "john@example.com",
-    image: "https://github.com/shadcn.png?height=32&width=32",
-  };
+const user: any = {
+  id: "1",
+  name: "John",
+  email: "john@example.com",
+  image: "https://github.com/shadcn.png?height=32&width=32",
+};
 
+const WatchLaterContent = () => {
+  
   const [WatchLater, setWatchLater] = useState<WatchLaterItem[]>([]);
   const [loading, setLoading] = useState(true);
 

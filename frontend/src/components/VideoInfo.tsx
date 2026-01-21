@@ -42,7 +42,7 @@ const VideoInfo = ({ video }: any) => {
       setIsLiked(true);
       if (isDisliked) {
         setDislikes((prev: any) => prev - 1);
-        setIsLiked(false);
+        setIsDisliked(false);
       }
     }
   };

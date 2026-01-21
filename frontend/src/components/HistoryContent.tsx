@@ -25,14 +25,14 @@ interface HistoryItem {
   };
 }
 
-const HistoryContent = () => {
-  const user: any = {
-    id: "1",
-    name: "John",
-    email: "john@example.com",
-    image: "https://github.com/shadcn.png?height=32&width=32",
-  };
+const user: any = {
+  id: "1",
+  name: "John",
+  email: "john@example.com",
+  image: "https://github.com/shadcn.png?height=32&width=32",
+};
 
+const HistoryContent = () => {
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [loading, setLoading] = useState(true);
 
