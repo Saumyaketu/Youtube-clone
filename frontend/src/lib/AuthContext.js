@@ -1,3 +1,4 @@
+"use client";
 import { createContext, useState, useEffect, useContext } from "react";
 import { onAuthStateChanged, signInWithPopup, signOut } from "firebase/auth";
 import { provider, auth } from "./firebase";
@@ -6,11 +7,7 @@ import axiosInstance from "./AxiosInstance";
 const UserContext = createContext();
 
 export const UserProvider = ({ children }) => {
-  const [user, setUser] = useState(() =>
-    localStorage.getItem("user")
-      ? JSON.parse(localStorage.getItem("user"))
-      : null,
-  );
+  const [user, setUser] = useState(null);
 
   const login = (userData) => {
     setUser(userData);
@@ -29,15 +26,15 @@ export const UserProvider = ({ children }) => {
 
   const handleGoogleSignIn = async () => {
     try {
-      await signInWithPopup(auth, provider);
+        await signInWithPopup(auth, provider);
     } catch (error) {
-      console.error(error);
+      console.error("Popup error:", error);
     }
   };
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      if (firebaseUser) {
+      if (firebaseUser && !user) {
         try {
           const payload = {
             email: firebaseUser.email,

@@ -20,7 +20,7 @@ const VideoCard = ({ video }: any) => {
 
         <div className="flex gap-3">
           <Avatar className="w-9 h-9 shrink-0">
-            <AvatarImage src="/placeholder.svg?height=36&width=36" />
+            <AvatarImage />
             <AvatarFallback>{video.videochanel[0]}</AvatarFallback>
           </Avatar>
           <div className="flex-1 min-w-0">

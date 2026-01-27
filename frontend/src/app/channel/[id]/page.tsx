@@ -14,12 +14,12 @@ type PageProps = {
 const page = async ({ params }: PageProps) => {
   const { id } = await params;
 
-  const user: any = {
-    id: "1",
-    name: "John",
-    email: "john@example.com",
-    image: "https://github.com/shadcn.png?height=32&width=32",
-  };
+  // const user: any = {
+  //   id: "1",
+  //   name: "John",
+  //   email: "john@example.com",
+  //   image: "https://github.com/shadcn.png?height=32&width=32",
+  // };
 
   try {
     let channel = {
@@ -66,13 +66,13 @@ const page = async ({ params }: PageProps) => {
     return (
       <div className="flex-1 min-h-screen bg-white">
         <div className="max-w-full mx-auto">
-          <ChannelHeader channel={channel} user={user}/>
+          <ChannelHeader channel={channel} />
           <ChannelTabs />
           <div className="px-4 pb-8">
             <VideoUploader channelId={id} channelName={channel.name} />
           </div>
           <div className="px-4 pb-8">
-            <ChannelVideos videos={videos}/>
+            <ChannelVideos videos={videos} />
           </div>
         </div>
       </div>

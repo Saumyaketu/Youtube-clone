@@ -3,7 +3,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import bodyParser from "body-parser";
 import mongoose from "mongoose";
-import userRoutes from "./routes/auth.js";
+import authRoutes from "./routes/auth.js";
 
 dotenv.config();
 const app = express();
@@ -17,7 +17,7 @@ app.get("/", (req, res) => {
 });
 
 app.use(bodyParser.json());
-app.use("/user", userRoutes);
+app.use("/user", authRoutes);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
@@ -31,5 +31,5 @@ mongoose
     console.log("Mongodb connected");
   })
   .catch((error) => {
-    console.log(error);
+    console.log("Mongodb connection error:", error);
   });

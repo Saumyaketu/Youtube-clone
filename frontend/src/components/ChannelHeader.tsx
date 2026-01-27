@@ -2,8 +2,10 @@
 import { Avatar, AvatarFallback } from "./ui/avatar";
 import React, { useState } from "react";
 import { Button } from "./ui/button";
+import { useUser } from "../lib/AuthContext";
 
-const ChannelHeader = ({ channel, user }: any) => {
+const ChannelHeader = ({ channel }: any) => {
+  const { user } = useUser();
   const [isSubscribed, setIsSubscribed] = useState(false);
 
   return (

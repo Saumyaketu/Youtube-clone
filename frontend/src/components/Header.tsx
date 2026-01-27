@@ -14,16 +14,17 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import ChannelDialogue from "./ChannelDialogue";
 import { useRouter } from "next/navigation";
+import { useUser } from "../lib/AuthContext";
 
 const Header = () => {
-  const user: any = {
-    id: "1",
-    name: "John",
-    email: "john@example.com",
-    image: "https://github.com/shadcn.png?height=32&width=32",
-  };
+  const { user, logout, handleGoogleSignIn } = useUser();
+  // const user: any = {
+  //   id: "1",
+  //   name: "John",
+  //   email: "john@example.com",
+  //   image: "https://github.com/shadcn.png?height=32&width=32",
+  // };
   const [searchQuery, setSearchQuery] = useState("");
-  const [hasChannel, setHasChannel] = useState(false);
   const [isDialogueOpen, setisDialogueOpen] = useState(false);
   const router = useRouter();
 
@@ -58,6 +59,8 @@ const Header = () => {
         <div className="flex flex-1">
           <Input
             type="search"
+            name="search"
+            id="search-navbar"
             placeholder="Search"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -92,13 +95,13 @@ const Header = () => {
                   className="relative h-8 w-8 rounded-full"
                 >
                   <Avatar className="h-8 w-8">
-                    <AvatarImage src={user.image || ""} alt={user.name || ""} />
+                    <AvatarImage src={user.image || undefined} alt={user.name || "User Avatar"} />
                     <AvatarFallback>{user.name?.[0] || "U"}</AvatarFallback>
                   </Avatar>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent className="w-56" align="end" forceMount>
-                {hasChannel ? (
+                {user?.channelName ? (
                   <DropdownMenuItem asChild>
                     <Link href="/channel/my-channel">Your Channel</Link>
                   </DropdownMenuItem>
@@ -124,13 +127,16 @@ const Header = () => {
                   <Link href="/watch-later">Watch Later</Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem>Sign out</DropdownMenuItem>
+                <DropdownMenuItem onClick={logout}>Sign out</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </>
         ) : (
           <>
-            <Button className="flex items-center gap-2">
+            <Button
+              className="flex items-center gap-2 bg-gray-500 hover:bg-gray-600"
+              onClick={handleGoogleSignIn}
+            >
               <User className="w-4 h-4" />
               Sign in
             </Button>

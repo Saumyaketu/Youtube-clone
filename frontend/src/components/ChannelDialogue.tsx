@@ -1,5 +1,5 @@
 "use client";
-import { Dialog, DialogContent, DialogFooter, DialogTitle } from "./ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogTitle } from "./ui/dialog";
 import { useRouter } from "next/navigation";
 import React, { ChangeEvent, FormEvent, useEffect, useState } from "react";
 import { DialogHeader } from "./ui/dialog";
@@ -7,14 +7,18 @@ import { Label } from "./ui/label";
 import { Input } from "./ui/input";
 import { Textarea } from "./ui/textarea";
 import { Button } from "./ui/button";
+import axiosInstance from "../lib/AxiosInstance";
+import { useUser } from "../lib/AuthContext";
 
 const ChannelDialogue = ({ isopen, onclose, channeldata, mode }: any) => {
-  const user: any = {
-    id: "1",
-    name: "John",
-    email: "john@example.com",
-    image: "https://github.com/shadcn.png?height=32&width=32",
-  };
+  const { user, login } = useUser();
+
+  // const user: any = {
+  //   id: "1",
+  //   name: "John",
+  //   email: "john@example.com",
+  //   image: "https://github.com/shadcn.png?height=32&width=32",
+  // };
 
   const router = useRouter();
   const [formData, setFormData] = useState({
@@ -31,11 +35,11 @@ const ChannelDialogue = ({ isopen, onclose, channeldata, mode }: any) => {
       });
     } else {
       setFormData({
-        name: user.name || "",
+        name: user?.name || "",
         description: "",
       });
     }
-  }, [channeldata]);
+  }, [channeldata, user, mode]);
 
   const handleChange = (
     e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
@@ -46,6 +50,36 @@ const ChannelDialogue = ({ isopen, onclose, channeldata, mode }: any) => {
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    const userId = user?._id || user?.id;
+
+    if (!userId) {
+      console.error("User ID is missing. Cannot update.", user);
+      return;
+    }
+    setIsSubmiting(true);
+
+    const payload = {
+      channelName: formData.name,
+      description: formData.description,
+    };
+    try {
+      const response = await axiosInstance.patch(
+        `/user/update/${userId}`,
+        payload,
+      );
+      login(response?.data);
+      
+      router.push(`/channel/${userId}`);
+      setFormData({
+        name: "",
+        description: "",
+      });
+      onclose();
+    } catch (error) {
+      console.error("Failed to update channel:", error);
+    } finally {
+      setIsSubmiting(false);
+    }
   };
 
   return (
@@ -55,6 +89,11 @@ const ChannelDialogue = ({ isopen, onclose, channeldata, mode }: any) => {
           <DialogTitle>
             {mode === "create" ? "Create your channel" : "Edit your channel"}
           </DialogTitle>
+          <DialogDescription>
+            {mode === "create" 
+              ? "Fill in the details below to start your new channel." 
+              : "Update your channel information below."}
+          </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-2">
