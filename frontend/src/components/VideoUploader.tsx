@@ -6,6 +6,7 @@ import { Button } from "./ui/button";
 import { Label } from "./ui/label";
 import { Input } from "./ui/input";
 import { Progress } from "@radix-ui/react-progress";
+import axiosInstance from "../lib/AxiosInstance";
 
 const VideoUploader = ({ channelId, channelName }: any) => {
   const [isUploading, setIsUploading] = useState(false);
@@ -50,6 +51,40 @@ const VideoUploader = ({ channelId, channelName }: any) => {
   const cancelUpload = () => {
     if (isUploading) {
       toast.error("Your video upload has been cancelled.");
+    }
+  };
+
+  const handleUpload = async () => {
+    if (!videoFile || !videoTitle.trim()) {
+      toast.error("Please provide file and title");
+      return;
+    }
+    const formData = new FormData();
+    formData.append("file", videoFile);
+    formData.append("videotitle", videoTitle);
+    formData.append("videochannel", channelName);
+    formData.append("uploader", channelId);
+    try {
+      setIsUploading(true);
+      setUploadProgress(0);
+      const res = await axiosInstance.post("/video/upload", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+        onUploadProgress: (progressEvent: any) => {
+          const progress = Math.round(
+            (progressEvent.loaded * 100) / progressEvent.total,
+          );
+          setUploadProgress(progress);
+        },
+      });
+      toast.success("Uploaded successfully");
+      resetForm();
+    } catch (error) {
+      console.log(error);
+      toast.error("Error in uploading video");
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -139,6 +174,7 @@ const VideoUploader = ({ channelId, channelName }: any) => {
                       Cancel
                     </Button>
                     <Button
+                      onClick={handleUpload}
                       disabled={
                         isUploading || !videoTitle.trim() || uploadComplete
                       }

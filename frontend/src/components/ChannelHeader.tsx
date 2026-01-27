@@ -16,23 +16,27 @@ const ChannelHeader = ({ channel }: any) => {
         <div className="flex felx-col md:flex-row gap-6 items-start">
           <Avatar className="w-20 h-20 md:w-32 md:h-32">
             <AvatarFallback className="text-2xl">
-              {channel.name[0]}
+              {channel?.channelName[0]}
             </AvatarFallback>
           </Avatar>
 
           <div className="flex-1 space-y-2">
-            <h1 className="text-2xl md:text-4xl font-bold">{channel.name}</h1>
+            <h1 className="text-2xl md:text-4xl font-bold">
+              {channel?.channelName}
+            </h1>
             <div className="flex flex-wrap gap-4 text-sm text-gray-600">
-              <span>@{channel.name.toLowerCase().replace(/\s+/g, "")}</span>
+              <span>
+                @{channel?.channelName.toLowerCase().replace(/\s+/g, "")}
+              </span>
             </div>
-            {channel.description && (
+            {channel?.description && (
               <p className="text-sm text-gray-700 max-w-2xl">
-                {channel.description}
+                {channel?.description}
               </p>
             )}
           </div>
 
-          {user && user.id !== channel.id && (
+          {user && user?._id !== channel?._id && (
             <div className="flex gap-2">
               <Button
                 onClick={() => setIsSubscribed(!isSubscribed)}

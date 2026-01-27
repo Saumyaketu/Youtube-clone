@@ -1,35 +1,23 @@
+"use client";
 import ChannelHeader from "@/src/components/ChannelHeader";
 import ChannelTabs from "@/src/components/ChannelTabs";
 import ChannelVideos from "@/src/components/ChannelVideos";
 import VideoUploader from "@/src/components/VideoUploader";
-import { notFound } from "next/navigation";
+import { useUser } from "@/src/lib/AuthContext";
+import { notFound, useParams } from "next/navigation";
 import React from "react";
 
-type PageProps = {
-  params: Promise<{
-    id: string;
-  }>;
-};
+const page = () => {
+  const params = useParams();
+  const id = params?.id as string;
+  const { user } = useUser();
 
-const page = async ({ params }: PageProps) => {
-  const { id } = await params;
-
-  // const user: any = {
-  //   id: "1",
-  //   name: "John",
-  //   email: "john@example.com",
-  //   image: "https://github.com/shadcn.png?height=32&width=32",
-  // };
+  if (!user) {
+    return <div className="p-4 text-center">Loading...</div>;
+  }
 
   try {
-    let channel = {
-      id: id,
-      name: "Tech Channel",
-      email: "tech@example.com",
-      description:
-        "Welcome to our tech channel! We cover the latest in technology, reviews and tutorials.",
-      joinedOn: new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString(),
-    };
+    let channel = user;
     if (!channel) {
       notFound();
     }
@@ -69,7 +57,7 @@ const page = async ({ params }: PageProps) => {
           <ChannelHeader channel={channel} />
           <ChannelTabs />
           <div className="px-4 pb-8">
-            <VideoUploader channelId={id} channelName={channel.name} />
+            <VideoUploader channelId={id} channelName={channel.channelName} />
           </div>
           <div className="px-4 pb-8">
             <ChannelVideos videos={videos} />

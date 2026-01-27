@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 import bodyParser from "body-parser";
 import mongoose from "mongoose";
 import authRoutes from "./routes/auth.js";
+import videoRoutes from "./routes/video.js";
 
 dotenv.config();
 const app = express();
@@ -18,6 +19,7 @@ app.get("/", (req, res) => {
 
 app.use(bodyParser.json());
 app.use("/user", authRoutes);
+app.use("/video", videoRoutes);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {

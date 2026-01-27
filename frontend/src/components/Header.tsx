@@ -95,7 +95,10 @@ const Header = () => {
                   className="relative h-8 w-8 rounded-full"
                 >
                   <Avatar className="h-8 w-8">
-                    <AvatarImage src={user.image || undefined} alt={user.name || "User Avatar"} />
+                    <AvatarImage
+                      src={user.image || undefined}
+                      alt={user.name || "User Avatar"}
+                    />
                     <AvatarFallback>{user.name?.[0] || "U"}</AvatarFallback>
                   </Avatar>
                 </Button>
@@ -103,7 +106,7 @@ const Header = () => {
               <DropdownMenuContent className="w-56" align="end" forceMount>
                 {user?.channelName ? (
                   <DropdownMenuItem asChild>
-                    <Link href="/channel/my-channel">Your Channel</Link>
+                    <Link href={`/channel/${user?._id}`}>Your Channel</Link>
                   </DropdownMenuItem>
                 ) : (
                   <div className="xp-2 py-1.5">
