@@ -15,7 +15,7 @@ interface LikeItem {
   _id: string;
   videoid: string;
   viewer: string;
-  watchedon: string;
+  likedon: string;
   video: {
     _id: string;
     videotitle: string;
@@ -52,7 +52,7 @@ const LikedContent = () => {
           _id: "h1",
           videoid: "1",
           viewer: user.id,
-          watchedon: new Date(Date.now() - 3600000).toISOString(),
+          likedon: new Date(Date.now() - 3600000).toISOString(),
           video: {
             _id: "1",
             videotitle: "Amazing Nature Documentry",
@@ -65,7 +65,7 @@ const LikedContent = () => {
           _id: "h2",
           videoid: "2",
           viewer: user.id,
-          watchedon: new Date(Date.now() - 7200000).toISOString(),
+          likedon: new Date(Date.now() - 7200000).toISOString(),
           video: {
             _id: "2",
             videotitle: "Cooking Tutorial: Perfect Pasta",
@@ -152,7 +152,7 @@ const LikedContent = () => {
                 {formatDistanceToNow(new Date(item.video.createdAt))} ago
               </p>
               <p className="text-xs text-gray-500 mt-1">
-                Watched {formatDistanceToNow(new Date(item.watchedon))}
+                Watched {formatDistanceToNow(new Date(item.likedon))}
               </p>
             </div>
 
