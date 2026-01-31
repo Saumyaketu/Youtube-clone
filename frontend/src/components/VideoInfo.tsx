@@ -10,6 +10,7 @@ import {
   ThumbsUp,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+import { useUser } from "../lib/AuthContext";
 
 const VideoInfo = ({ video }: any) => {
   const [likes, setLikes] = useState(video.Like || 0);
@@ -18,12 +19,7 @@ const VideoInfo = ({ video }: any) => {
   const [isDisliked, setIsDisliked] = useState(false);
   const [showFullDescription, setShowFullDescription] = useState(false);
 
-  const user: any = {
-    id: "1",
-    name: "John",
-    email: "john@example.com",
-    image: "https://github.com/shadcn.png?height=32&width=32",
-  };
+  const { user } = useUser();
 
   useEffect(() => {
     setLikes(video.Like || 0);
@@ -69,7 +65,7 @@ const VideoInfo = ({ video }: any) => {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Avatar className="w-10 h-10">
-            <AvatarFallback>{video.videochanel[0]}</AvatarFallback>
+            <AvatarFallback>{video.videochannel?.[0] || "U"}</AvatarFallback>
           </Avatar>
           <div>
             <h3 className="font-medium">{video.videochannel}</h3>
@@ -138,9 +134,17 @@ const VideoInfo = ({ video }: any) => {
           <span>{formatDistanceToNow(new Date(video.createdAt))} ago</span>
         </div>
         <div className={`text-sm ${showFullDescription ? "" : "line-clamp-3"}`}>
-          <p>Sample video description. This would contain the actual video description from the database.</p>
+          <p>
+            Sample video description. This would contain the actual video
+            description from the database.
+          </p>
         </div>
-        <Button variant="ghost" size="sm" className="mt-2 p-0 h-auto font-medium" onClick={() => setShowFullDescription(!showFullDescription)} >
+        <Button
+          variant="ghost"
+          size="sm"
+          className="mt-2 p-0 h-auto font-medium"
+          onClick={() => setShowFullDescription(!showFullDescription)}
+        >
           {showFullDescription ? "Show less" : "Show more"}
         </Button>
       </div>

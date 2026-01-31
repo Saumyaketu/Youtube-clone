@@ -8,8 +8,11 @@ const VideoPlayer = ({ video }: any) => {
   return (
     <div className="aspect-video bg-black rounded-lg overflow-hidden">
       <video ref={videoRef} className="w-full h-full" controls>
-        <source src={videos} type="video/mp4"/>
-          Your browser does not support the video tag.
+        <source
+          src={`${process.env.NEXT_PUBLIC_BACKEND_URL}/${video.filepath}`}
+          type="video/mp4"
+        />
+        Your browser does not support the video tag.
       </video>
     </div>
   );
