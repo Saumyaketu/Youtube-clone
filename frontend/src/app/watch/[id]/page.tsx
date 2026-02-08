@@ -4,6 +4,8 @@ import RelatedVideos from "@/src/components/RelatedVideos";
 import VideoInfo from "@/src/components/VideoInfo";
 import VideoPlayer from "@/src/components/VideoPlayer";
 import axiosInstance from "@/src/lib/AxiosInstance";
+import { useUser } from "@/src/lib/AuthContext";
+import { useSearchParams } from "next/navigation";
 import React, { useEffect, useState, use } from "react";
 
 type PageProps = {
@@ -14,6 +16,9 @@ type PageProps = {
 
 const Page = ({ params }: PageProps) => {
   const { id } = use(params);
+  const searchParams = useSearchParams();
+  const listType = searchParams.get("list");
+  const { user } = useUser();
 
   const [videos, setVideos] = useState<any[]>([]);
   const [video, setVideo] = useState<any>(null);
@@ -22,10 +27,20 @@ const Page = ({ params }: PageProps) => {
     const fetchVideo = async () => {
       if (!id || typeof id !== "string") return;
       try {
-        const res = await axiosInstance.get("/video/getall");
-        const video = res.data?.find((vid:any) => vid._id == id);
-        setVideo(video || null);
-        setVideos(res.data);
+        const allVideosRes = await axiosInstance.get("/video/getall");
+        const currentVideo = allVideosRes.data?.find(
+          (vid: any) => vid._id == id,
+        );
+        setVideo(currentVideo || null);
+
+        if (listType === "liked" && user?._id) {
+          const likedRes = await axiosInstance.get(`/like/${user._id}`);
+
+          const formattedQueue = likedRes.data.map((item: any) => item.videoid);
+          setVideos(formattedQueue);
+        } else {
+          setVideos(allVideosRes.data);
+        }
       } catch (error) {
         console.error("Error fetching videos:", error);
       } finally {
@@ -33,38 +48,7 @@ const Page = ({ params }: PageProps) => {
       }
     };
     fetchVideo();
-  }, [id]);
-
-  // const relatedVideos = [
-  //   {
-  //     _id: "1",
-  //     videotitle: "Amazing Nature Documentary",
-  //     filename: "nature-doc.mp4",
-  //     filetype: "video/mp4",
-  //     filepath: "/videos/nature-doc.mp4",
-  //     filesize: "500MB",
-  //     videochanel: "Nature Channel",
-  //     Like: 125,
-  //     Dislike: 50,
-  //     views: 450,
-  //     uploader: "nature_lover",
-  //     createdAt: new Date().toISOString(),
-  //   },
-  //   {
-  //     _id: "2",
-  //     videotitle: "Cooking Tutorial: Perfect Pasta",
-  //     filename: "pasta-tutorial.mp4",
-  //     filetype: "video/mp4",
-  //     filepath: "/videos/pasta-tutorial.mp4",
-  //     filesize: "300MB",
-  //     videochanel: "Chef's Kitchen",
-  //     Like: 90,
-  //     Dislike: 20,
-  //     views: 230,
-  //     uploader: "chef_master",
-  //     createdAt: new Date(Date.now() - 86400000).toISOString(),
-  //   },
-  // ];
+  }, [id, listType, user]);
 
   if (loading) {
     return (
@@ -91,6 +75,12 @@ const Page = ({ params }: PageProps) => {
             <Comments videoId={id} />
           </div>
           <div className="space-y-4">
+            {listType === "liked" && (
+              <div className="bg-gray-100 p-3 rounded-lg mb-2">
+                <h3 className="font-semibold text-sm">Liked Videos Queue</h3>
+                <p className="text-xs text-gray-500">{videos.length} videos</p>
+              </div>
+            )}
             <RelatedVideos videos={videos} />
           </div>
         </div>

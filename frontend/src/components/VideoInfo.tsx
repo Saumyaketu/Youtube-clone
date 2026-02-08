@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { useUser } from "../lib/AuthContext";
+import axiosInstance from "../lib/AxiosInstance";
 
 const VideoInfo = ({ video }: any) => {
   const [likes, setLikes] = useState(video.Like || 0);
@@ -26,35 +27,52 @@ const VideoInfo = ({ video }: any) => {
     setDislikes(video.Dislike || 0);
     setIsLiked(false);
     setIsDisliked(false);
-  }, [video]);
 
-  const handleLike = () => {
-    if (!user) return;
-    if (isLiked) {
-      setLikes((prev: any) => prev - 1);
-      setIsLiked(false);
-    } else {
-      setLikes((prev: any) => prev + 1);
-      setIsLiked(true);
-      if (isDisliked) {
-        setDislikes((prev: any) => prev - 1);
-        setIsDisliked(false);
+    const fetchLikeStatus = async () => {
+      if (!user?._id || !video?._id) return;
+
+      try {
+        const res = await axiosInstance.get(
+          `/like/status/${video._id}/${user._id}`,
+        );
+        setIsLiked(res.data.isLiked);
+        setIsDisliked(res.data.isDisliked);
+        setLikes(res.data.likes);
+        setDislikes(res.data.dislikes);
+      } catch (error) {
+        console.error("Error fetching like status", error);
       }
+    };
+    fetchLikeStatus();
+  }, [video, user]);
+
+  const handleLike = async () => {
+    if (!user) return;
+    try {
+      const res = await axiosInstance.post(`/like/like/${video._id}`, {
+        userId: user?._id,
+      });
+      setLikes(res.data.likeCount);
+      setDislikes(res.data.dislikeCount);
+      setIsLiked(res.data.liked);
+      setIsDisliked(res.data.disliked);
+    } catch (error) {
+      console.error(error);
     }
   };
 
-  const handleDislike = () => {
+  const handleDislike = async () => {
     if (!user) return;
-    if (isDisliked) {
-      setDislikes((prev: any) => prev - 1);
-      setIsDisliked(false);
-    } else {
-      setDislikes((prev: any) => prev + 1);
-      setIsDisliked(true);
-      if (isLiked) {
-        setLikes((prev: any) => prev - 1);
-        setIsLiked(false);
-      }
+    try {
+      const res = await axiosInstance.post(`/like/dislike/${video._id}`, {
+        userId: user?._id,
+      });
+      setLikes(res.data.likeCount);
+      setDislikes(res.data.dislikeCount);
+      setIsLiked(res.data.liked);
+      setIsDisliked(res.data.disliked);
+    } catch (error) {
+      console.error(error);
     }
   };
 
