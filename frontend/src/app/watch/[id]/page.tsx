@@ -23,6 +23,7 @@ const Page = ({ params }: PageProps) => {
   const [videos, setVideos] = useState<any[]>([]);
   const [video, setVideo] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+
   useEffect(() => {
     const fetchVideo = async () => {
       if (!id || typeof id !== "string") return;
@@ -38,6 +39,16 @@ const Page = ({ params }: PageProps) => {
 
           const formattedQueue = likedRes.data.map((item: any) => item.videoid);
           setVideos(formattedQueue);
+        } else if (listType === "wl") {
+          try {
+            const wlRes = await axiosInstance.get(`/watch/${user._id}`);
+            const formattedQueue = wlRes.data
+              .filter((item: any) => item.videoid !== null)
+              .map((item: any) => item.videoid);
+            setVideos(formattedQueue);
+          } catch (error) {
+            console.error("Error fetching watch later:", error);
+          }
         } else {
           setVideos(allVideosRes.data);
         }
@@ -75,9 +86,13 @@ const Page = ({ params }: PageProps) => {
             <Comments videoId={id} />
           </div>
           <div className="space-y-4">
-            {listType === "liked" && (
+            {(listType === "liked" || listType === "wl") && (
               <div className="bg-gray-100 p-3 rounded-lg mb-2">
-                <h3 className="font-semibold text-sm">Liked Videos Queue</h3>
+                <h3 className="font-semibold text-sm">
+                  {listType === "liked"
+                    ? "Liked Videos Queue"
+                    : "Watch Later Queue"}
+                </h3>
                 <p className="text-xs text-gray-500">{videos.length} videos</p>
               </div>
             )}

@@ -10,31 +10,13 @@ import Link from "next/link";
 import { Clock, MoreVertical, X } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import { Button } from "./ui/button";
-
-interface HistoryItem {
-  _id: string;
-  videoid: string;
-  viewer: string;
-  watchedon: string;
-  video: {
-    _id: string;
-    videotitle: string;
-    videochannel: string;
-    views: number;
-    createdAt: string;
-  };
-}
-
-const user: any = {
-  id: "1",
-  name: "John",
-  email: "john@example.com",
-  image: "https://github.com/shadcn.png?height=32&width=32",
-};
+import axiosInstance from "../lib/AxiosInstance";
+import { useUser } from "../lib/AuthContext";
 
 const HistoryContent = () => {
-  const [history, setHistory] = useState<HistoryItem[]>([]);
+  const [history, setHistory] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const { user } = useUser();
 
   useEffect(() => {
     if (user) {
@@ -47,35 +29,11 @@ const HistoryContent = () => {
   const loadHistory = async () => {
     if (!user) return;
     try {
-      const historyData = [
-        {
-          _id: "h1",
-          videoid: "1",
-          viewer: user.id,
-          watchedon: new Date(Date.now() - 3600000).toISOString(),
-          video: {
-            _id: "1",
-            videotitle: "Amazing Nature Documentry",
-            videochannel: "Nature Channel",
-            views: 450,
-            createdAt: new Date().toISOString(),
-          },
-        },
-        {
-          _id: "h2",
-          videoid: "2",
-          viewer: user.id,
-          watchedon: new Date(Date.now() - 7200000).toISOString(),
-          video: {
-            _id: "2",
-            videotitle: "Cooking Tutorial: Perfect Pasta",
-            videochannel: "Chef's Kitchen",
-            views: 230,
-            createdAt: new Date(Date.now() - 86400000).toISOString(),
-          },
-        },
-      ];
-      setHistory(historyData);
+      const historyData = await axiosInstance.get(`/history/${user?._id}`);
+      const validHistory = historyData.data.filter(
+        (item: any) => item.videoid !== null,
+      );
+      setHistory(validHistory);
     } catch (error) {
       console.error("Error loading history:", error);
     } finally {
@@ -87,9 +45,9 @@ const HistoryContent = () => {
 
   const handleRemoveHistory = async (historyId: string) => {
     try {
-      console.log("Removing history item with ID:", historyId);
+      await axiosInstance.delete(`/history/${historyId}`);
       setHistory((prevHistory) =>
-        prevHistory.filter((item) => item._id !== historyId)
+        prevHistory.filter((item) => item._id !== historyId),
       );
     } catch (error) {
       console.error("Error removing history item:", error);
@@ -131,7 +89,7 @@ const HistoryContent = () => {
       <div className="space-y-4">
         {history.map((item) => (
           <div key={item._id} className="flex gap-4 group">
-            <Link href={`/watch/${item.video._id}`} className="shrink-0">
+            <Link href={`/watch/${item.videoid._id}`} className="shrink-0">
               <div className="relative w-40 aspect-video bg-gray-100 rounded overflow-hidden">
                 <video
                   src={videos}
@@ -141,18 +99,17 @@ const HistoryContent = () => {
             </Link>
 
             <div className="flex-1 min-w-0">
-              <Link href={`/watch/${item.video._id}`}>
+              <Link href={`/watch/${item.videoid._id}`}>
                 <h3 className="font-medium text-sm line-clamp-2 group-hover:text-blue-600 mb-1">
-                  {item.video.videotitle}
+                  {item.videoid.videotitle}
                 </h3>
               </Link>
-              <p className="text-sm text-gray-600">{item.video.videochannel}</p>
               <p className="text-sm text-gray-600">
-                {item.video.views.toLocaleString()} views •{" "}
-                {formatDistanceToNow(new Date(item.video.createdAt))} ago
+                {item.videoid.videochannel}
               </p>
-              <p className="text-xs text-gray-500 mt-1">
-                Watched {formatDistanceToNow(new Date(item.watchedon))}
+              <p className="text-sm text-gray-600">
+                {item.videoid.views.toLocaleString()} views •{" "}
+                {formatDistanceToNow(new Date(item.createdAt))} ago
               </p>
             </div>
 

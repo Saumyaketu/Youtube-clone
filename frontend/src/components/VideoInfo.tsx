@@ -1,8 +1,9 @@
 "use client";
 import { Avatar, AvatarFallback } from "./ui/avatar";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Button } from "./ui/button";
 import {
+  Clock,
   Download,
   MoreHorizontal,
   Share,
@@ -19,8 +20,42 @@ const VideoInfo = ({ video }: any) => {
   const [isLiked, setIsLiked] = useState(false);
   const [isDisliked, setIsDisliked] = useState(false);
   const [showFullDescription, setShowFullDescription] = useState(false);
+  const [isWatchlater, setIsWatchlater] = useState(false);
 
   const { user } = useUser();
+
+  const viewCountedRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!video?._id) return;
+
+    if (viewCountedRef.current !== video._id) {
+      viewCountedRef.current = video._id;
+
+      const addView = async () => {
+        try {
+          await axiosInstance.post(`/history/views/${video._id}`);
+        } catch (error) {
+          console.error("View count error:", error);
+        }
+      };
+      addView();
+    }
+  }, [video?._id]);
+
+  useEffect(() => {
+    if (!user?._id || !video?._id) return;
+
+    const addToHistory = async () => {
+      try {
+        await axiosInstance.post(`/history/${video._id}`, {
+          userId: user._id,
+        });
+      } catch (error) {
+        console.error("History error:", error);
+      }
+    };
+    addToHistory();
+  }, [video?._id, user?._id]);
 
   useEffect(() => {
     setLikes(video.Like || 0);
@@ -44,6 +79,19 @@ const VideoInfo = ({ video }: any) => {
       }
     };
     fetchLikeStatus();
+
+    const fetchWatchlaterStatus = async () => {
+      if (!user?._id || !video?._id) return;
+      try {
+        const res = await axiosInstance.get(
+          `/watch/status/${video._id}/${user._id}`,
+        );
+        setIsWatchlater(res.data.watchlater);
+      } catch (error) {
+        console.error("Error fetching watch-later status", error);
+      }
+    };
+    fetchWatchlaterStatus();
   }, [video, user]);
 
   const handleLike = async () => {
@@ -71,6 +119,22 @@ const VideoInfo = ({ video }: any) => {
       setDislikes(res.data.dislikeCount);
       setIsLiked(res.data.liked);
       setIsDisliked(res.data.disliked);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const handleWatchlater = async () => {
+    if (!user) return;
+    try {
+      const res = await axiosInstance.post(`/watch/${video._id}`, {
+        userId: user?._id,
+      });
+      if (res.data.watchlater) {
+        setIsWatchlater(!isWatchlater);
+      } else {
+        setIsWatchlater(false);
+      }
     } catch (error) {
       console.error(error);
     }
@@ -121,6 +185,17 @@ const VideoInfo = ({ video }: any) => {
               {dislikes.toLocaleString()}
             </Button>
           </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            className={`bg-gray-100 rounded-full ${
+              isWatchlater ? "text-primary" : ""
+            }`}
+            onClick={handleWatchlater}
+          >
+            <Clock className="w-5 h-5 mr-2" />
+            {isWatchlater ? "Saved" : "Watch Later"}
+          </Button>
           <Button
             variant="ghost"
             size="sm"

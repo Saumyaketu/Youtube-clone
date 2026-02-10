@@ -6,6 +6,8 @@ import mongoose from "mongoose";
 import authRoutes from "./routes/auth.js";
 import videoRoutes from "./routes/video.js";
 import likeRoutes from "./routes/like.js";
+import watchlaterRoutes from "./routes/watchlater.js";
+import historyRoutes from "./routes/history.js";
 import path from "path";
 
 dotenv.config();
@@ -26,6 +28,8 @@ app.use(bodyParser.json());
 app.use("/user", authRoutes);
 app.use("/video", videoRoutes);
 app.use("/like", likeRoutes);
+app.use("/watch", watchlaterRoutes);
+app.use("/history", historyRoutes);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
