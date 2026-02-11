@@ -12,7 +12,7 @@ const commentSchema = mongoose.Schema(
       ref: "user",
       required: true,
     },
-    commentebody: { type: String },
+    commentbody: { type: String, required: true },
     usercommented: { type: String },
     commentedon: { type: Date, default: Date.now },
   },

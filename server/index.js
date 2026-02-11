@@ -8,6 +8,7 @@ import videoRoutes from "./routes/video.js";
 import likeRoutes from "./routes/like.js";
 import watchlaterRoutes from "./routes/watchlater.js";
 import historyRoutes from "./routes/history.js";
+import commentRoutes from "./routes/comment.js";
 import path from "path";
 
 dotenv.config();
@@ -30,17 +31,18 @@ app.use("/video", videoRoutes);
 app.use("/like", likeRoutes);
 app.use("/watch", watchlaterRoutes);
 app.use("/history", historyRoutes);
+app.use("/comment", commentRoutes);
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
 
 const DBURL = process.env.DB_URL;
 mongoose
   .connect(DBURL)
   .then(() => {
     console.log("Mongodb connected");
+    app.listen(PORT, () => {
+      console.log(`Server running on port ${PORT}`);
+    });
   })
   .catch((error) => {
     console.log("Mongodb connection error:", error);

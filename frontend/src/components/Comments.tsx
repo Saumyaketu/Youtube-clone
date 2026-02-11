@@ -1,9 +1,11 @@
 "use client";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
-import React, { use, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Textarea } from "./ui/textarea";
 import { Button } from "./ui/button";
 import { formatDistanceToNow } from "date-fns";
+import { useUser } from "../lib/AuthContext";
+import axiosInstance from "../lib/AxiosInstance";
 
 interface Comment {
   _id: string;
@@ -20,42 +22,26 @@ const Comments = ({ videoId }: any) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
   const [editText, setEditText] = useState("");
-  const user: any = {
-    id: "1",
-    name: "John",
-    email: "john@example.com",
-    image: "https://github.com/shadcn.png?height=32&width=32",
-  };
+  const { user } = useUser();
   const [loading, setLoading] = useState(true);
 
-  const fetchedComments = [
-    {
-      _id: "1",
-      videoid: videoId,
-      userid: "1",
-      commentbody: "Great video! Really enjoyed watching this.",
-      usercommented: "John Doe",
-      commentedon: new Date(Date.now() - 3600000).toISOString(),
-    },
-    {
-      _id: "2",
-      videoid: videoId,
-      userid: "2",
-      commentbody: "Thanks for sharing this amazing content!",
-      usercommented: "Jane Smith",
-      commentedon: new Date(Date.now() - 7200000).toISOString(),
-    },
-  ];
   useEffect(() => {
     loadComments();
   }, [videoId]);
 
   const loadComments = async () => {
-    setComments(fetchedComments);
+    try {
+      const res = await axiosInstance.get(`/comment/${videoId}`);
+      setComments(res.data.commentVideo);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (loading) {
-    <div>Loading comments...</div>;
+    return <div>Loading comments...</div>;
   }
 
   const handleSubmitComment = async () => {
@@ -63,16 +49,15 @@ const Comments = ({ videoId }: any) => {
 
     setIsSubmitting(true);
     try {
-      const newCommentObj: Comment = {
-        _id: Date.now().toString(),
+      const res = await axiosInstance.post("/comment/postComment", {
         videoid: videoId,
-        userid: user.id,
+        userid: user._id,
         commentbody: newComment,
-        usercommented: user.name || "Anonymous",
-        commentedon: new Date().toISOString(),
-      };
-
-      setComments([newCommentObj, ...comments]);
+        usercommented: user.name,
+      });
+      if (res.data.comment && res.data.newComment) {
+        setComments([res.data.newComment, ...comments]);
+      }
       setNewComment("");
     } catch (error) {
       console.error("Error adding comment:", error);
@@ -83,23 +68,39 @@ const Comments = ({ videoId }: any) => {
 
   const handleEdit = (comment: Comment) => {
     setEditingCommentId(comment._id);
-    setEditText(comment.commentbody);
+    setEditText(comment.commentbody || "");
   };
 
-  const handleUpdateComment = () => {
+  const handleUpdateComment = async () => {
     if (!editText.trim()) return;
-
-    setComments((prev) =>
-      prev.map((c) =>
-        c._id === editingCommentId ? { ...c, commentbody: editText } : c
-      )
-    );
-    setEditingCommentId(null);
-    setEditText("");
+    try {
+      const res = await axiosInstance.post(
+        `/comment/editComment/${editingCommentId}`,
+        { commentbody: editText },
+      );
+      if (res.data.comment) {
+        setComments((prev) =>
+          prev.map((c) =>
+            c._id === editingCommentId ? { ...c, commentbody: editText } : c,
+          ),
+        );
+        setEditingCommentId(null);
+        setEditText("");
+      }
+    } catch (error) {
+      console.error(error);
+    }
   };
 
-  const handleDelete = (id: string) => {
-    setComments((prev) => prev.filter((c) => c._id !== id));
+  const handleDelete = async (id: string) => {
+    try {
+      const res = await axiosInstance.delete(`/comment/deleteComment/${id}`);
+      if (res.data.comment) {
+        setComments((prev) => prev.filter((c) => c._id !== id));
+      }
+    } catch (error) {
+      console.error(error);
+    }
   };
 
   return (
@@ -138,7 +139,9 @@ const Comments = ({ videoId }: any) => {
       )}
       <div className="space-y-4">
         {comments.length === 0 ? (
-          <p className="text-sm text-gray-500 italic">No comments yet. Be the first to comment!</p>
+          <p className="text-sm text-gray-500 italic">
+            No comments yet. Be the first to comment!
+          </p>
         ) : (
           comments.map((comment) => (
             <div key={comment._id} className="flex gap-4">
@@ -148,7 +151,9 @@ const Comments = ({ videoId }: any) => {
               </Avatar>
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-1">
-                  <span className="font-medium text-sm">{comment.usercommented}</span>
+                  <span className="font-medium text-sm">
+                    {comment.usercommented}
+                  </span>
                   <span className="text-xs text-gray-600">
                     {formatDistanceToNow(new Date(comment.commentedon))} ago
                   </span>
@@ -163,7 +168,7 @@ const Comments = ({ videoId }: any) => {
                     <div className="flex gap-2 justify-end">
                       <Button
                         onClick={handleUpdateComment}
-                        disabled={!editText.trim()}
+                        disabled={!editText || !editText.trim()}
                       >
                         Save
                       </Button>
