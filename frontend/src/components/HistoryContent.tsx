@@ -78,8 +78,6 @@ const HistoryContent = () => {
     );
   }
 
-  const videos = "/video/vdo.mp4";
-
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
@@ -92,7 +90,7 @@ const HistoryContent = () => {
             <Link href={`/watch/${item.videoid._id}`} className="shrink-0">
               <div className="relative w-40 aspect-video bg-gray-100 rounded overflow-hidden">
                 <video
-                  src={videos}
+                  src={`${process.env.NEXT_PUBLIC_BACKEND_URL}/${item.videoid.filepath}`}
                   className="object-cover group-hover:scale-105 transition-transform duration-200"
                 />
               </div>

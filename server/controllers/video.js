@@ -32,7 +32,18 @@ export const getAllVideo = async (req, res) => {
     const files = await video.find();
     return res.status(200).send(files);
   } catch (error) {
-    console.error("Login error:", error);
+    console.error("Fetch error:", error);
+    return res.status(500).json({ message: "Something went wrong" });
+  }
+};
+
+export const getUserVideos = async (req, res) => {
+  try {
+    const { videochannel } = req.params;
+    const files = await video.find({ videochannel: videochannel });
+    return res.status(200).send(files);
+  } catch (error) {
+    console.error("Fetch user videos error:", error);
     return res.status(500).json({ message: "Something went wrong" });
   }
 };

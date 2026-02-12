@@ -6,18 +6,12 @@ export const handleHistory = async (req, res) => {
   const { videoId } = req.params;
 
   try {
-    const existingHistory = await history.findOne({
-      viewer: userId,
-      videoid: videoId,
-    });
-    if (existingHistory) {
-      existingHistory.createdAt = new Date();
-      await existingHistory.save();
-      return res.status(200).json({ history: true });
-    } else {
-      await history.create({ viewer: userId, videoid: videoId });
-      return res.status(200).json({ history: true });
-    }
+    await history.findOneAndUpdate(
+      { viewer: userId, videoid: videoId },
+      { $set: { watchedon: new Date() } },
+      { upsert: true, new: true },
+    );
+    return res.status(200).json({ history: true });
   } catch (error) {
     console.error("History error:", error);
     return res.status(500).json({ message: "Something went wrong" });
@@ -40,7 +34,7 @@ export const getAllHistoryVideo = async (req, res) => {
   try {
     const historyVideo = await history
       .find({ viewer: userId })
-      .sort({ createdAt: -1 })
+      .sort({ watchedon: -1 })
       .populate({
         path: "videoid",
         model: "videofiles",
