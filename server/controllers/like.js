@@ -14,29 +14,31 @@ export const handleLike = async (req, res) => {
       viewer: userId,
       videoid: videoId,
     });
+
+    let updateQuery = {};
+
     if (existingLike) {
       await like.findByIdAndDelete(existingLike._id);
+      updateQuery = { $inc: { Like: -1 } };
     } else {
       await like.create({ viewer: userId, videoid: videoId });
-
+      updateQuery = { $inc: { Like: 1 } };
       if (existingDislike) {
         await dislike.findByIdAndDelete(existingDislike._id);
+        updateQuery.$inc.Dislike = -1;
       }
-      const likeCount = await like.countDocuments({ videoid: videoId });
-      const dislikeCount = await dislike.countDocuments({ videoid: videoId });
-
-      await video.findByIdAndUpdate(videoId, {
-        Like: likeCount,
-        Dislike: dislikeCount,
-      });
-
-      return res.status(200).json({
-        liked: !existingLike,
-        disliked: false,
-        likeCount,
-        dislikeCount,
-      });
     }
+
+    const updatedVideo = await video.findByIdAndUpdate(videoId, updateQuery, {
+      new: true,
+    });
+
+    return res.status(200).json({
+      liked: !existingLike,
+      disliked: false,
+      likeCount: updatedVideo.Like,
+      dislikeCount: updatedVideo.Dislike,
+    });
   } catch (error) {
     console.error("Like error:", error);
     return res.status(500).json({ message: "Something went wrong" });
@@ -56,29 +58,30 @@ export const handleDislike = async (req, res) => {
       videoid: videoId,
     });
 
+    let updateQuery = {};
+
     if (existingDislike) {
       await dislike.findByIdAndDelete(existingDislike._id);
+      updateQuery = { $inc: { Dislike: -1 } };
     } else {
       await dislike.create({ viewer: userId, videoid: videoId });
-
+      updateQuery = { $inc: { Dislike: 1 } };
       if (existingLike) {
         await like.findByIdAndDelete(existingLike._id);
+        updateQuery.$inc.Like = -1;
       }
-      const likeCount = await like.countDocuments({ videoid: videoId });
-      const dislikeCount = await dislike.countDocuments({ videoid: videoId });
-
-      await video.findByIdAndUpdate(videoId, {
-        Like: likeCount,
-        Dislike: dislikeCount,
-      });
-
-      return res.status(200).json({
-        liked: false,
-        disliked: !existingDislike,
-        likeCount,
-        dislikeCount,
-      });
     }
+
+    const updatedVideo = await video.findByIdAndUpdate(videoId, updateQuery, {
+      new: true,
+    });
+
+    return res.status(200).json({
+      liked: false,
+      disliked: !existingDislike,
+      likeCount: updatedVideo.Like,
+      dislikeCount: updatedVideo.Dislike,
+    });
   } catch (error) {
     console.error("Dislike error:", error);
     return res.status(500).json({ message: "Something went wrong" });
