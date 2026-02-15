@@ -5,6 +5,14 @@ import mongoose from "mongoose";
 
 export const postComment = async (req, res) => {
   const commentData = req.body;
+
+  const regex = /[^\p{L}\p{N}\s.,!?'"-]/u;
+  if (regex.test(commentData.commentbody)) {
+    return res
+      .status(400)
+      .json({ message: "Comments cannot contain special characters (@, #, $, etc)." });
+  }
+
   const postComment = new comment(commentData);
   try {
     const savedData = await postComment.save();
@@ -18,7 +26,7 @@ export const postComment = async (req, res) => {
 export const getAllComment = async (req, res) => {
   const { videoId } = req.params;
   try {
-    const commentVideo = await comment.find({ videoid: videoId });
+    const commentVideo = await comment.find({ videoid: videoId }).sort({ commentedon: -1 });
     return res.status(200).json({ commentVideo });
   } catch (error) {
     console.error("Error fetching comment:", error);
@@ -45,6 +53,14 @@ export const deleteComment = async (req, res) => {
 export const editComment = async (req, res) => {
   const { id: _id } = req.params;
   const { commentbody } = req.body;
+
+  const regex = /[^\p{L}\p{N}\s.,!?'"-]/u;
+  if (regex.test(commentbody)) {
+    return res
+      .status(400)
+      .json({ message: "Comments cannot contain special characters (@, #, $, etc)." });
+  }
+
   if (!mongoose.Types.ObjectId.isValid(_id)) {
     return res.status(404).send("Comment unavailable");
   }
