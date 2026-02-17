@@ -6,7 +6,7 @@ import mongoose from "mongoose";
 export const postComment = async (req, res) => {
   const commentData = req.body;
 
-  const regex = /[^\p{L}\p{N}\s.,!?'"-]/u;
+  const regex = /[^\p{L}\p{M}\p{N}\s.,!?'"|¿¡。-]/u;
   if (regex.test(commentData.commentbody)) {
     return res
       .status(400)
@@ -54,7 +54,7 @@ export const editComment = async (req, res) => {
   const { id: _id } = req.params;
   const { commentbody } = req.body;
 
-  const regex = /[^\p{L}\p{N}\s.,!?'"-]/u;
+  const regex = /[^\p{L}\p{M}\p{N}\s.,!?'"|¿¡。-]/u;
   if (regex.test(commentbody)) {
     return res
       .status(400)
