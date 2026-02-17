@@ -3,7 +3,14 @@ import Link from "next/link";
 import { Avatar, AvatarImage, AvatarFallback } from "./ui/avatar";
 import { formatDistanceToNow } from "date-fns";
 
-const videos = "/video/vdo.mp4";
+const formatDuration = (duration: any) => {
+  const seconds = parseFloat(duration);
+  if (isNaN(seconds) || seconds <= 0) return "00:00";
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = Math.floor(seconds % 60);
+  return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`;
+};
+
 const VideoCard = ({ video }: any) => {
   return (
     <Link href={`/watch/${video._id}`} className="group">
@@ -14,7 +21,7 @@ const VideoCard = ({ video }: any) => {
             className="object-cover group-hover:scale-105 transition-transform duration-200"
           />
           <div className="absolute bottom-2 right-2 bg-black/80 text-white text-xs px-1 rounded">
-            10:24
+            {formatDuration(video.duration)}
           </div>
         </div>
 

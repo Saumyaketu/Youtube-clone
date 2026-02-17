@@ -13,6 +13,7 @@ const VideoUploader = ({ channelId, channelName }: any) => {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [videoTitle, setVideoTitle] = useState("");
+  const [videoDuration, setVideoDuration] = useState<number>(0);
   const [uploadComplete, setUploadComplete] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -28,6 +29,14 @@ const VideoUploader = ({ channelId, channelName }: any) => {
         toast.error("File size exceeds 100MB limit.");
         return;
       }
+      const video = document.createElement('video');
+      video.preload = 'metadata';
+      video.onloadedmetadata = function() {
+        window.URL.revokeObjectURL(video.src);
+        setVideoDuration(video.duration);
+      }
+      video.src = URL.createObjectURL(file);
+
       setVideoFile(file);
       const fileName = file.name;
       if (!videoTitle) {
@@ -39,6 +48,7 @@ const VideoUploader = ({ channelId, channelName }: any) => {
   const resetForm = () => {
     setVideoFile(null);
     setVideoTitle("");
+    setVideoDuration(0);
     setIsUploading(false);
     setUploadProgress(0);
     setUploadComplete(false);
@@ -64,6 +74,7 @@ const VideoUploader = ({ channelId, channelName }: any) => {
     formData.append("videotitle", videoTitle);
     formData.append("videochannel", channelName);
     formData.append("uploader", channelId);
+    formData.append("duration", videoDuration.toString());
     try {
       setIsUploading(true);
       setUploadProgress(0);
