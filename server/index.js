@@ -9,6 +9,7 @@ import likeRoutes from "./routes/like.js";
 import watchlaterRoutes from "./routes/watchlater.js";
 import historyRoutes from "./routes/history.js";
 import commentRoutes from "./routes/comment.js";
+import paymentRoutes from "./routes/payment.js";
 import path from "path";
 
 dotenv.config();
@@ -32,6 +33,7 @@ app.use("/like", likeRoutes);
 app.use("/watch", watchlaterRoutes);
 app.use("/history", historyRoutes);
 app.use("/comment", commentRoutes);
+app.use("/payment", paymentRoutes);
 
 const PORT = process.env.PORT || 5000;
 

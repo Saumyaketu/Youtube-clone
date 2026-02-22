@@ -8,6 +8,7 @@ const userSchema = mongoose.Schema(
     description: { type: String },
     image: { type: String },
     joinedOn: { type: Date, default: Date.now },
+    isPremium: { type: Boolean, default: false },
   },
   {
     timestamps: true,
