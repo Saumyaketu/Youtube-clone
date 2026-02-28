@@ -13,6 +13,7 @@ import {
 import { formatDistanceToNow } from "date-fns";
 import { useUser } from "../lib/AuthContext";
 import axiosInstance from "../lib/AxiosInstance";
+import PremiumModal from "./PremiumModal";
 
 const VideoInfo = ({ video }: any) => {
   const [likes, setLikes] = useState(video.Like || 0);
@@ -21,6 +22,7 @@ const VideoInfo = ({ video }: any) => {
   const [isDisliked, setIsDisliked] = useState(false);
   const [showFullDescription, setShowFullDescription] = useState(false);
   const [isWatchlater, setIsWatchlater] = useState(false);
+  const [showPremiumModal, setShowPremiumModal] = useState(false);
 
   const { user } = useUser();
 
@@ -140,6 +142,51 @@ const VideoInfo = ({ video }: any) => {
     }
   };
 
+  const handleDownload = async () => {
+    if (!user) {
+      alert("Please sign in to download videos.");
+      return;
+    }
+
+    try {
+      const checkRes = await axiosInstance.get(
+        `/user/check-download/${user._id}`,
+      );
+
+      if (checkRes.data.allowed) {
+        const normalizedPath = video.filepath.replace(/\\/g, "/");
+        const fileUrl = `${process.env.NEXT_PUBLIC_BACKEND_URL}/${normalizedPath}`;
+
+        const response = await axiosInstance.get(fileUrl, {
+          responseType: "blob",
+        });
+
+        const blob = new Blob([response.data], {
+          type: video.filetype || "video/mp4",
+        });
+        const localUrl = window.URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = localUrl;
+        link.setAttribute("download", video.filename || "video.mp4");
+        link.setAttribute("target", "_blank");
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+
+        await axiosInstance.post(`/user/track-download/${user._id}`);
+      } else {
+        setShowPremiumModal(true);
+      }
+    } catch (error: any) {
+      if (error.response && error.response.status === 403) {
+        setShowPremiumModal(true);
+      } else {
+        console.error("Download error:", error);
+        alert("Error trying to download the video.");
+      }
+    }
+  };
+
   return (
     <div className="space-y-4">
       <h1 className="text-xl font-semibold">{video.videotitle}</h1>
@@ -208,6 +255,7 @@ const VideoInfo = ({ video }: any) => {
             variant="ghost"
             size="sm"
             className="bg-gray-100 rounded-full"
+            onClick={handleDownload}
           >
             <Download className="w-5 h-5 mr-2" />
             Download
@@ -241,6 +289,11 @@ const VideoInfo = ({ video }: any) => {
           {showFullDescription ? "Show less" : "Show more"}
         </Button>
       </div>
+
+      <PremiumModal
+        isOpen={showPremiumModal}
+        onClose={() => setShowPremiumModal(false)}
+      />
     </div>
   );
 };
