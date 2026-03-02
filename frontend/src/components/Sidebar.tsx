@@ -15,12 +15,6 @@ import ChannelDialogue from "./ChannelDialogue";
 import { useUser } from "../lib/AuthContext";
 
 const Sidebar = () => {
-  // const user: any = {
-  //   id: "1",
-  //   name: "John",
-  //   email: "john@example.com",
-  //   image: "https://github.com/shadcn.png?height=32&width=32",
-  // };
   const { user } = useUser();
   const [isDialogueOpen, setisDialogueOpen] = useState(false);
 
@@ -68,7 +62,7 @@ const Sidebar = () => {
                 </Button>
               </Link>
               {user?.channelName ? (
-                <Link href={`/channel/${user.id}`}>
+                <Link href={`/channel/${user._id}`}>
                   <Button variant="ghost" className="w-full justify-start">
                     <User className="w-5 h-5 mr-3" />
                     Your channel

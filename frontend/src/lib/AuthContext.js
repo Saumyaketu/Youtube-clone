@@ -1,6 +1,11 @@
 "use client";
 import { createContext, useState, useEffect, useContext } from "react";
-import { onAuthStateChanged, signInWithPopup, signOut } from "firebase/auth";
+import {
+  onAuthStateChanged,
+  signInWithRedirect,
+  getRedirectResult,
+  signOut,
+} from "firebase/auth";
 import { provider, auth } from "./firebase";
 import axiosInstance from "./AxiosInstance";
 
@@ -26,13 +31,37 @@ export const UserProvider = ({ children }) => {
 
   const handleGoogleSignIn = async () => {
     try {
-        await signInWithPopup(auth, provider);
+      await signInWithRedirect(auth, provider);
     } catch (error) {
       console.error("Popup error:", error);
     }
   };
 
   useEffect(() => {
+    const handleRedirectResult = async () => {
+      try {
+        const result = await getRedirectResult(auth);
+        if (result?.user) {
+          const payload = {
+            email: result.user.email,
+            name: result.user.displayName,
+            image: result.user.photoURL || "https://github.com/shadcn.png",
+          };
+          const response = await axiosInstance.post("/user/login", payload);
+          login(response.data.result);
+        }
+      } catch (error) {
+        if (
+          error.code !== "auth/cancelled-popup-request" &&
+          error.code !== "auth/popup-closed-by-user"
+        ) {
+          console.error("Redirect check error:", error);
+        }
+      }
+    };
+
+    handleRedirectResult();
+
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser && !user) {
         try {
@@ -50,7 +79,7 @@ export const UserProvider = ({ children }) => {
       }
     });
     return () => unsubscribe();
-  }, []);
+  }, [user]);
   return (
     <UserContext.Provider value={{ user, login, logout, handleGoogleSignIn }}>
       {children}
