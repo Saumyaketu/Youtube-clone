@@ -58,7 +58,7 @@ export const checkDownloadEligibility = async (req, res) => {
     const user = await users.findById(id);
     if (!user) return res.status(404).json({ message: "User not found" });
 
-    if (user.isPremium) {
+    if (user.plan !== "Free") {
       return res.status(200).json({ allowed: true, message: "Premium User" });
     }
 
@@ -92,7 +92,7 @@ export const trackDownload = async (req, res) => {
   const { id } = req.params;
   try {
     const user = await users.findById(id);
-    if (user && !user.isPremium) {
+    if (user && user.plan === "Free") {
       user.downloadsToday += 1;
       user.lastDownloadDate = new Date();
       await user.save();

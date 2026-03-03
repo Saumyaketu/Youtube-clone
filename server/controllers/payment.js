@@ -10,10 +10,30 @@ const instance = new Razorpay({
   key_secret: process.env.RAZORPAY_KEY_SECRET,
 });
 
+const PLAN_PRICES = {
+  Bronze: 1000, // ₹10
+  Silver: 5000, // ₹50
+  Gold: 10000, // ₹100
+};
+
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
+  },
+});
+
 export const createOrder = async (req, res) => {
   try {
+    const { plan } = req.body;
+    const amount = PLAN_PRICES[plan];
+
+    if (!amount)
+      return res.status(400).json({ message: "Invalid plan selected" });
+
     const options = {
-      amount: 50000, // Amount 50000 = ₹500
+      amount: amount,
       currency: "INR",
       receipt: `receipt_${Date.now()}`,
     };
@@ -36,6 +56,8 @@ export const verifyPayment = async (req, res) => {
       razorpay_payment_id,
       razorpay_signature,
       userId,
+      plan,
+      email,
     } = req.body;
 
     const body = razorpay_order_id + "|" + razorpay_payment_id;
@@ -46,8 +68,31 @@ export const verifyPayment = async (req, res) => {
 
     if (expectedSignature === razorpay_signature) {
       await users.findByIdAndUpdate(userId, {
-        $set: { isPremium: true },
+        $set: { plan: plan },
       });
+
+      if (email) {
+        const mailOptions = {
+          from: process.env.EMAIL_USER,
+          to: email,
+          subject: `Invoice: YouTube Clone ${plan} Plan Subscription`,
+          html: `
+            <h2>Thank you for your purchase!</h2>
+            <p>Your payment was successful. Here is your invoice:</p>
+            <table border="1" cellpadding="10" style="border-collapse: collapse;">
+              <tr><th align="left">Plan</th><td>${plan}</td></tr>
+              <tr><th align="left">Amount Paid</th><td>₹${PLAN_PRICES[plan] / 100}</td></tr>
+              <tr><th align="left">Transaction ID</th><td>${razorpay_payment_id}</td></tr>
+              <tr><th align="left">Order ID</th><td>${razorpay_order_id}</td></tr>
+            </table>
+            <p>You can now enjoy your upgraded watch time limits and unlimited downloads!</p>
+          `,
+        };
+
+        transporter.sendMail(mailOptions, (err, info) => {
+          if (err) console.error("Error sending email:", err);
+        });
+      }
 
       res.status(200).json({
         message: "Payment verified successfully",

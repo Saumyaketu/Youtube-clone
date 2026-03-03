@@ -8,7 +8,11 @@ const userSchema = mongoose.Schema(
     description: { type: String },
     image: { type: String },
     joinedOn: { type: Date, default: Date.now },
-    isPremium: { type: Boolean, default: false },
+    plan: {
+      type: String,
+      enum: ["Free", "Bronze", "Silver", "Gold"],
+      default: "Free",
+    },
     downloadsToday: { type: Number, default: 0 },
     lastDownloadDate: { type: Date, default: null },
   },
