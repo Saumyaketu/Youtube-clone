@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Button } from "./ui/button";
 import { X, Check } from "lucide-react";
 import axiosInstance from "../lib/AxiosInstance";
@@ -11,10 +11,12 @@ interface PremiumModalProps {
 
 const PremiumModal = ({ isOpen, onClose }: PremiumModalProps) => {
   const { user, login } = useUser();
+  const [loading, setLoading] = useState(false);
 
   if (!isOpen) return null;
 
-  const handlePayment = async () => {
+  const handlePayment = async (plan: String) => {
+    setLoading(true);
     const res = await loadScript(
       "https://checkout.razorpay.com/v1/checkout.js",
     );
@@ -39,7 +41,7 @@ const PremiumModal = ({ isOpen, onClose }: PremiumModalProps) => {
         amount: amount.toString(),
         currency: currency,
         name: "YouTube Clone Premium",
-        description: "Unlimited Downloads Plan",
+        description: `${plan} Plan Upgrade`,
         order_id: order_id,
         handler: async function (response: any) {
           const data = {
@@ -47,12 +49,16 @@ const PremiumModal = ({ isOpen, onClose }: PremiumModalProps) => {
             razorpay_order_id: response.razorpay_order_id,
             razorpay_signature: response.razorpay_signature,
             userId: user._id,
+            email: user.email,
+            plan: plan,
           };
 
           const result = await axiosInstance.post("/payment/verify", data);
           if (result.data.isPremium) {
-            alert("Welcome to Premium! You can now download unlimited videos.");
-            login({ ...user, isPremium: true });
+            alert(
+              `Welcome to the ${plan} Plan! An invoice has been emailed to you.`,
+            );
+            login({ ...user, plan: plan });
             onClose();
           }
         },
@@ -83,39 +89,95 @@ const PremiumModal = ({ isOpen, onClose }: PremiumModalProps) => {
           <X className="w-5 h-5" />
         </button>
 
-        <h2 className="text-2xl font-bold mb-4">Upgrade to Premium</h2>
-        <div className="mb-6 space-y-3">
-          <p className="text-gray-600">
-            You've reached your daily download limit.
-          </p>
-          <div className="border rounded-lg p-4 bg-gray-50">
-            <h3 className="font-semibold text-lg mb-2">Premium Plan</h3>
-            <ul className="space-y-2 text-sm">
+        <h2 className="text-2xl font-bold mb-4">Upgrade to Keep Watching</h2>
+        <p className="text-gray-600 mb-6">
+          You've reached your watch limit. Upgrade to unlock more time and
+          unlimited downloads!
+        </p>
+
+        <div className="grid md:grid-cols-3 gap-4">
+          {/* Bronze Plan */}
+          <div className="border rounded-lg p-5 bg-orange-50 flex flex-col">
+            <h3 className="font-semibold text-xl text-orange-800 border-b pb-2 mb-4">
+              Bronze
+            </h3>
+            <ul className="space-y-3 text-sm text-gray-700 grow">
               <li className="flex items-center gap-2">
-                <Check className="w-4 h-4 text-green-600" /> Unlimited Downloads
+                <Check className="w-4 h-4 text-green-600" /> 7 mins watch limit
               </li>
               <li className="flex items-center gap-2">
-                <Check className="w-4 h-4 text-green-600" /> Ad-free experience
+                <Check className="w-4 h-4 text-green-600" /> Unlimited Video
+                Downloads
+              </li>
+            </ul>
+            <div className="text-3xl font-bold my-4">₹10</div>
+            <Button
+              disabled={loading}
+              onClick={() => handlePayment("Bronze")}
+              className="w-full mt-auto bg-orange-600 hover:bg-orange-700"
+            >
+              Select Bronze
+            </Button>
+          </div>
+
+          {/* Silver Plan */}
+          <div className="border rounded-lg p-5 bg-gray-100 flex flex-col relative transform scale-105 shadow-lg">
+            <div className="absolute top-0 right-0 bg-blue-600 text-white text-xs px-2 py-1 rounded-bl-lg rounded-tr-lg">
+              Popular
+            </div>
+            <h3 className="font-semibold text-xl text-gray-800 border-b pb-2 mb-4">
+              Silver
+            </h3>
+            <ul className="space-y-3 text-sm text-gray-700 grow">
+              <li className="flex items-center gap-2">
+                <Check className="w-4 h-4 text-green-600" /> 10 mins watch limit
+              </li>
+              <li className="flex items-center gap-2">
+                <Check className="w-4 h-4 text-green-600" /> Unlimited Video
+                Downloads
               </li>
               <li className="flex items-center gap-2">
                 <Check className="w-4 h-4 text-green-600" /> Priority Support
               </li>
             </ul>
-            <div className="mt-4 text-xl font-bold">
-              ₹500{" "}
-              <span className="text-sm font-normal text-gray-500">
-                / lifetime
-              </span>
-            </div>
+            <div className="text-3xl font-bold my-4">₹50</div>
+            <Button
+              disabled={loading}
+              onClick={() => handlePayment("Silver")}
+              className="w-full mt-auto bg-gray-600 hover:bg-gray-700"
+            >
+              Select Silver
+            </Button>
+          </div>
+
+          {/* Gold Plan */}
+          <div className="border rounded-lg p-5 bg-yellow-50 flex flex-col">
+            <h3 className="font-semibold text-xl text-yellow-800 border-b pb-2 mb-4">
+              Gold
+            </h3>
+            <ul className="space-y-3 text-sm text-gray-700 grow">
+              <li className="flex items-center gap-2">
+                <Check className="w-4 h-4 text-green-600" /> Unlimited watch
+                time
+              </li>
+              <li className="flex items-center gap-2">
+                <Check className="w-4 h-4 text-green-600" /> Unlimited Video
+                Downloads
+              </li>
+              <li className="flex items-center gap-2">
+                <Check className="w-4 h-4 text-green-600" /> Ad-free experience
+              </li>
+            </ul>
+            <div className="text-3xl font-bold my-4">₹100</div>
+            <Button
+              disabled={loading}
+              onClick={() => handlePayment("Gold")}
+              className="w-full mt-auto bg-yellow-500 hover:bg-yellow-600 text-black"
+            >
+              Select Gold
+            </Button>
           </div>
         </div>
-
-        <Button
-          onClick={handlePayment}
-          className="w-full bg-red-600 hover:bg-red-700"
-        >
-          Get Premium
-        </Button>
       </div>
     </div>
   );
