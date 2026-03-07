@@ -27,6 +27,10 @@ const VideoPlayer = ({ video }: any) => {
     }
   };
 
+  const videoUrl = video?.filepath?.startsWith("http")
+    ? video.filepath
+    : `${process.env.NEXT_PUBLIC_BACKEND_URL}/${video?.filepath}`;
+
   return (
     <>
       <div className="aspect-video bg-black rounded-lg overflow-hidden relative">
@@ -34,12 +38,10 @@ const VideoPlayer = ({ video }: any) => {
           ref={videoRef}
           className="w-full h-full"
           controls
+          crossOrigin="anonymous"
           onTimeUpdate={handleTimeUpdate}
         >
-          <source
-            src={`${process.env.NEXT_PUBLIC_BACKEND_URL}/${video.filepath}`}
-            type="video/mp4"
-          />
+          <source src={videoUrl} type="video/mp4" />
           Your browser does not support the video tag.
         </video>
       </div>
