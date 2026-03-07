@@ -3,14 +3,8 @@ import multer from "multer";
 import { v2 as cloudinary } from "cloudinary";
 import dotenv from "dotenv";
 
-// import { createRequire } from "module";
-// const require = createRequire(import.meta.url);
-
-// const { CloudinaryStorage } = require("multer-storage-cloudinary");
-
 import pkg from "multer-storage-cloudinary";
 
-// 1. Destructure from the default import
 const { CloudinaryStorage } = pkg;
 
 dotenv.config();
