@@ -13,14 +13,20 @@ const formatDuration = (duration: any) => {
 
 const VideoCard = ({ video }: any) => {
   if (!video) return null;
-  const normalizedPath = video.filepath ? video.filepath.replace(/\\/g, "/") : "";
+
+  const isCloudinary = video?.filepath?.startsWith("http");
+  const thumbnailUrl = isCloudinary
+    ? video.filepath.replace(/\.(mp4|mkv|webm|avi)$/i, ".jpg")
+    : "/file.svg";
+
   return (
     <Link href={`/watch/${video._id}`} className="group">
       <div className="space-y-3">
         <div className="relative aspect-video rounded-lg overflow-hidden bg-gray-100">
-          <video
-            src={`${process.env.NEXT_PUBLIC_BACKEND_URL}/${normalizedPath}`}
-            className="object-cover group-hover:scale-105 transition-transform duration-200"
+          <img
+            src={thumbnailUrl}
+            alt={video.videotitle}
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
           />
           <div className="absolute bottom-2 right-2 bg-black/80 text-white text-xs px-1 rounded">
             {formatDuration(video.duration)}

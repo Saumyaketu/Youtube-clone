@@ -13,6 +13,14 @@ import { Button } from "./ui/button";
 import axiosInstance from "../lib/AxiosInstance";
 import { useUser } from "../lib/AuthContext";
 
+const formatDuration = (duration: any) => {
+  const seconds = parseFloat(duration);
+  if (isNaN(seconds) || seconds <= 0) return "00:00";
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = Math.floor(seconds % 60);
+  return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`;
+};
+
 const HistoryContent = () => {
   const [history, setHistory] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -85,51 +93,64 @@ const HistoryContent = () => {
       </div>
 
       <div className="space-y-4">
-        {history.map((item) => (
-          <div key={item._id} className="flex gap-4 group">
-            <Link href={`/watch/${item.videoid._id}`} className="shrink-0">
-              <div className="relative w-40 aspect-video bg-gray-100 rounded overflow-hidden">
-                <video
-                  src={`${process.env.NEXT_PUBLIC_BACKEND_URL}/${item.videoid.filepath}`}
-                  className="object-cover group-hover:scale-105 transition-transform duration-200"
-                />
-              </div>
-            </Link>
+        {history.map((item) => {
+          const isCloudinary = item.videoid?.filepath?.startsWith("http");
+          const thumbnailUrl = isCloudinary
+            ? item.videoid.filepath.replace(/\.(mp4|mkv|webm|avi)$/i, ".jpg")
+            : "/file.svg";
 
-            <div className="flex-1 min-w-0">
-              <Link href={`/watch/${item.videoid._id}`}>
-                <h3 className="font-medium text-sm line-clamp-2 group-hover:text-blue-600 mb-1">
-                  {item.videoid.videotitle}
-                </h3>
+          return (
+            <div key={item._id} className="flex gap-4 group">
+              <Link href={`/watch/${item.videoid._id}`} className="shrink-0">
+                <div className="relative w-40 aspect-video bg-gray-100 rounded overflow-hidden">
+                  <img
+                    src={thumbnailUrl}
+                    alt={item.videoid.videotitle}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                  />
+                  <div className="absolute bottom-1 right-1 bg-black/80 text-white text-[10px] px-1 rounded">
+                    {formatDuration(item.videoid.duration)}
+                  </div>
+                </div>
               </Link>
-              <p className="text-sm text-gray-600">
-                {item.videoid.videochannel}
-              </p>
-              <p className="text-sm text-gray-600">
-                {item.videoid.views.toLocaleString()} views •{" "}
-                {formatDistanceToNow(new Date(item.createdAt))} ago
-              </p>
-            </div>
 
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="opacity-0 group-hover:opacity-100"
-                >
-                  <MoreVertical className="w-4 h-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => handleRemoveHistory(item._id)}>
-                  <X className="w-4 h-4 mr-2" />
-                  Remove from watch history
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        ))}
+              <div className="flex-1 min-w-0">
+                <Link href={`/watch/${item.videoid._id}`}>
+                  <h3 className="font-medium text-sm line-clamp-2 group-hover:text-blue-600 mb-1">
+                    {item.videoid.videotitle}
+                  </h3>
+                </Link>
+                <p className="text-sm text-gray-600">
+                  {item.videoid.videochannel}
+                </p>
+                <p className="text-sm text-gray-600">
+                  {item.videoid.views?.toLocaleString() || 0} views •{" "}
+                  {formatDistanceToNow(new Date(item.createdAt))} ago
+                </p>
+              </div>
+
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="opacity-0 group-hover:opacity-100"
+                  >
+                    <MoreVertical className="w-4 h-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem
+                    onClick={() => handleRemoveHistory(item._id)}
+                  >
+                    <X className="w-4 h-4 mr-2" />
+                    Remove from watch history
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          );
+        })}
       </div>
     </div>
   );

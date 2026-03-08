@@ -3,6 +3,15 @@ import { formatDistanceToNow } from "date-fns";
 import Link from "next/link";
 import React, { useEffect, useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
+import axiosInstance from "../lib/AxiosInstance";
+
+const formatDuration = (duration: any) => {
+  const seconds = parseFloat(duration);
+  if (isNaN(seconds) || seconds <= 0) return "00:00";
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = Math.floor(seconds % 60);
+  return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`;
+};
 
 const SearchResult = ({ query }: any) => {
   if (!query || !query.trim()) {
@@ -16,43 +25,23 @@ const SearchResult = ({ query }: any) => {
   const [video, setVideo] = useState<any[] | null>(null);
 
   useEffect(() => {
-    const fetchVideos = () => {
-      const allVideos = [
-        {
-          _id: "1",
-          videotitle: "Amazing Nature Documentary",
-          filename: "nature-doc.mp4",
-          filetype: "video/mp4",
-          filepath: "/videos/nature-doc.mp4",
-          filesize: "500MB",
-          videochannel: "Nature Channel",
-          Like: 125,
-          views: 450,
-          uploader: "nature_lover",
-          createdAt: new Date().toISOString(),
-        },
-        {
-          _id: "2",
-          videotitle: "Cooking Tutorial: Perfect Pasta",
-          filename: "pasta-tutorial.mp4",
-          filetype: "video/mp4",
-          filepath: "/videos/pasta-tutorial.mp4",
-          filesize: "300MB",
-          videochannel: "Chef's Kitchen",
-          Like: 90,
-          views: 230,
-          uploader: "chef_master",
-          createdAt: new Date(Date.now() - 86400000).toISOString(),
-        },
-      ];
-      const lowerQuery = query.toLowerCase();
+    const fetchVideos = async () => {
+      try {
+        const res = await axiosInstance.get("/video/getall");
+        const allVideos = res.data;
+        const lowerQuery = query.toLowerCase();
 
-      const results = allVideos.filter(
-        (vid) =>
-          vid.videotitle.toLowerCase().includes(lowerQuery) ||
-          vid.videochannel.toLowerCase().includes(lowerQuery),
-      );
-      setVideo(results);
+        const results = allVideos.filter(
+          (vid: any) =>
+            vid.videotitle?.toLowerCase().includes(lowerQuery) ||
+            vid.videochannel?.toLowerCase().includes(lowerQuery),
+        );
+
+        setVideo(results);
+      } catch (error) {
+        console.error("Error fetching search results:", error);
+        setVideo([]);
+      }
     };
 
     fetchVideos();
@@ -75,62 +64,70 @@ const SearchResult = ({ query }: any) => {
     );
   }
 
-  const vids = "/video/vdo.mp4";
   return (
     <div className="space-y-6">
       {video.length > 0 && (
         <div className="space-y-4">
-          {video.map((item: any) => (
-            <div key={item._id} className="flex gap-4 group">
-              <Link href={`/watch/${item._id}`} className="shrink-0">
-                <div className="relative w-80 aspect-video bg-gray-100 rounded-lg overflow-hidden">
-                  <video
-                    src={vids}
-                    className="object-cover group-hover:scale-105 transition-transform duration-200"
-                  />
-                  <div className="absolute bottom-2 right-2 bg-black/80 text-white text-xs px-1 rounded">
-                    10:24
+          {video.map((item: any) => {
+            const isCloudinary = item?.filepath?.startsWith("http");
+            const thumbnailUrl = isCloudinary
+              ? item.filepath.replace(/\.(mp4|mkv|webm|avi)$/i, ".jpg")
+              : "/file.svg";
+
+            return (
+              <div key={item._id} className="flex gap-4 group">
+                <Link href={`/watch/${item._id}`} className="shrink-0">
+                  <div className="relative w-80 aspect-video bg-gray-100 rounded-lg overflow-hidden">
+                    <img
+                      src={thumbnailUrl}
+                      alt={item.videotitle}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                    />
+                    <div className="absolute bottom-2 right-2 bg-black/80 text-white text-xs px-1 rounded">
+                      {formatDuration(item.duration)}
+                    </div>
                   </div>
-                </div>
-              </Link>
-
-              <div className="flex-1 min-w-0 py-1">
-                <Link href={`/watch/${item._id}`}>
-                  <h3 className="font-medium text-lg line-clamp-2 group-hover:text-blue-600 mb-2">
-                    {item.videotitle}
-                  </h3>
                 </Link>
 
-                <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
-                  <span>{item.views.toLocaleString()} views •</span>
-                  <span>
-                    {formatDistanceToNow(new Date(item.createdAt))} ago
-                  </span>
+                <div className="flex-1 min-w-0 py-1">
+                  <Link href={`/watch/${item._id}`}>
+                    <h3 className="font-medium text-lg line-clamp-2 group-hover:text-blue-600 mb-2">
+                      {item.videotitle}
+                    </h3>
+                  </Link>
+
+                  <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
+                    <span>{item.views?.toLocaleString() || 0} views •</span>
+                    <span>
+                      {item.createdAt
+                        ? formatDistanceToNow(new Date(item.createdAt))
+                        : "Just now"}{" "}
+                      ago
+                    </span>
+                  </div>
+
+                  <Link
+                    href={`/channel/${item.uploader}`}
+                    className="flex items-center gap-2 mb-2 hover:text-blue-600"
+                  >
+                    <Avatar className="w-6 h-6">
+                      <AvatarImage src="/placeholder.svg?height=24&width=24" />
+                      <AvatarFallback className="text-xs">
+                        {item.videochannel?.[0] || "U"}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className="text-sm text-gray-600">
+                      {item.videochannel}
+                    </span>
+                  </Link>
+
+                  <p className="text-sm text-gray-700 line-clamp-2">
+                    {item.description || "No description available."}
+                  </p>
                 </div>
-
-                <Link
-                  href={`/channel/${item.uploader}`}
-                  className="flex items-center gap-2 mb-2 hover:text-blue-600"
-                >
-                  <Avatar className="w-6h-6">
-                    <AvatarImage src="/placeholder.svg?height=24&width=24" />
-                    <AvatarFallback className="text-xs">
-                      {item.videochannel[0]}
-                    </AvatarFallback>
-                  </Avatar>
-                  <span className="text-sm text-gray-600">
-                    {item.videochannel}
-                  </span>
-                </Link>
-
-                <p className="text-sm text-gray-700 line-clamp-2">
-                  Sample video description that would show search-relevant
-                  content and help users understand what the video is about
-                  before clicking.
-                </p>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
