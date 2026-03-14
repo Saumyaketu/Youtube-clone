@@ -15,22 +15,24 @@ const PremiumModal = ({ isOpen, onClose }: PremiumModalProps) => {
 
   if (!isOpen) return null;
 
-  const handlePayment = async (plan: String) => {
+  const handlePayment = async (plan: string) => {
     setLoading(true);
-    const res = await loadScript(
-      "https://checkout.razorpay.com/v1/checkout.js",
-    );
-
-    if (!res) {
-      alert("Razorpay SDK failed to load. Are you online?");
-      return;
-    }
-
     try {
-      const result = await axiosInstance.post("/payment/order");
+      const res = await loadScript(
+        "https://checkout.razorpay.com/v1/checkout.js",
+      );
+
+      if (!res) {
+        alert("Razorpay SDK failed to load. Are you online?");
+        setLoading(false);
+        return;
+      }
+
+      const result = await axiosInstance.post("/payment/order", { plan });
 
       if (!result) {
         alert("Server error. Are you online?");
+        setLoading(false);
         return;
       }
 
@@ -69,13 +71,19 @@ const PremiumModal = ({ isOpen, onClose }: PremiumModalProps) => {
         theme: {
           color: "#ff0000",
         },
+        modal: {
+          ondismiss: function () {
+            setLoading(false);
+          },
+        },
       };
 
       const paymentObject = new (window as any).Razorpay(options);
       paymentObject.open();
     } catch (error) {
-      console.error(error);
-      alert("Payment creation failed");
+      console.error("Payment creation failed:", error);
+      alert("Payment creation failed. Please try again.");
+      setLoading(false);
     }
   };
 

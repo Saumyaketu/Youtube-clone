@@ -10,7 +10,6 @@ import watchlaterRoutes from "./routes/watchlater.js";
 import historyRoutes from "./routes/history.js";
 import commentRoutes from "./routes/comment.js";
 import paymentRoutes from "./routes/payment.js";
-import path from "path";
 
 dotenv.config();
 const app = express();
@@ -25,14 +24,10 @@ app.use(
 app.use(express.json({ limit: "30mb", extended: true }));
 app.use(express.urlencoded({ limit: "30mb", extended: true }));
 
-const __dirname = path.resolve();
-app.use("/uploads", express.static(path.join(__dirname, "/uploads")));
-
 app.get("/", (req, res) => {
   res.send("Youtube's backend is working");
 });
 
-app.use(bodyParser.json());
 app.use("/user", authRoutes);
 app.use("/video", videoRoutes);
 app.use("/like", likeRoutes);

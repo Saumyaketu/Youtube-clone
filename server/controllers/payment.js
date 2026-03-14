@@ -27,6 +27,12 @@ const transporter = nodemailer.createTransport({
 
 export const createOrder = async (req, res) => {
   try {
+    if (!req.body || !req.body.plan) {
+      return res
+        .status(400)
+        .json({ message: "Payment plan is missing from request" });
+    }
+
     const { plan } = req.body;
     const amount = PLAN_PRICES[plan];
 
