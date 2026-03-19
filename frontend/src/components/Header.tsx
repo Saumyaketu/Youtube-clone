@@ -15,23 +15,62 @@ import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import ChannelDialogue from "./ChannelDialogue";
 import { useRouter } from "next/navigation";
 import { useUser } from "../lib/AuthContext";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
+import { Label } from "./ui/label";
+
+const SOUTH_INDIAN_STATES = [
+  "tamil nadu",
+  "kerala",
+  "karnataka",
+  "andhra pradesh",
+  "telangana",
+];
 
 const Header = () => {
-  const { user, logout, handleGoogleSignIn } = useUser();
-  // const user: any = {
-  //   id: "1",
-  //   name: "John",
-  //   email: "john@example.com",
-  //   image: "https://github.com/shadcn.png?height=32&width=32",
-  // };
+  const {
+    user,
+    logout,
+    handleGoogleSignIn,
+    locationState,
+    showOtpModal,
+    setShowOtpModal,
+    verifyOtpAndLogin,
+  } = useUser();
   const [searchQuery, setSearchQuery] = useState("");
   const [isDialogueOpen, setisDialogueOpen] = useState(false);
   const router = useRouter();
+
+  const [phone, setPhone] = useState("");
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const [otpInput, setOtpInput] = useState("");
+  const [otpError, setOtpError] = useState("");
 
   const handleSearch = (e: FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
       router.push(`/search?query=${encodeURIComponent(searchQuery.trim())}`);
+    }
+  };
+
+  const onSignInClick = () => {
+    const isSouthIndia = locationState && SOUTH_INDIAN_STATES.includes(locationState.toLowerCase());
+    if (locationState && !isSouthIndia) {
+      setIsLoginModalOpen(true);
+    } else {
+      handleGoogleSignIn();
+    }
+  };
+
+  const submitPhoneAndContinue = () => {
+    if (phone.length < 10) return;
+    setIsLoginModalOpen(false);
+    handleGoogleSignIn(phone);
+  };
+  const submitOtp = async () => {
+    setOtpError("");
+    const success = await verifyOtpAndLogin(otpInput);
+    if (!success) {
+      setOtpError("Invalid or incorrect OTP. Please try again.");
     }
   };
 
@@ -138,11 +177,77 @@ const Header = () => {
           <>
             <Button
               className="flex items-center gap-2 bg-gray-500 hover:bg-gray-600"
-              onClick={handleGoogleSignIn}
+              onClick={onSignInClick}
+              disabled={locationState === null}
+              title={locationState === null ? "Detecting location..." : "Sign in"}
             >
               <User className="w-4 h-4" />
               Sign in
             </Button>
+
+            <Dialog open={isLoginModalOpen} onOpenChange={setIsLoginModalOpen}>
+              <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Enter Mobile Number</DialogTitle>
+                </DialogHeader>
+                <div className="flex flex-col gap-4 py-4">
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    Because you are logging in from outside South India, a
+                    mobile number is required for OTP verification.
+                  </p>
+                  <div className="flex flex-col gap-2">
+                    <Label htmlFor="phone">Mobile Number</Label>
+                    <Input
+                      id="phone"
+                      type="tel"
+                      placeholder="+91 9876543210"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                    />
+                  </div>
+                  <Button onClick={submitPhoneAndContinue} className="mt-2">
+                    Continue to Google Sign-In
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+
+            <Dialog
+              open={showOtpModal}
+              onOpenChange={(isOpen) => {
+                if (!isOpen) {
+                  sessionStorage.removeItem("pendingOtp");
+                  logout();
+                }
+                setShowOtpModal(isOpen);
+              }}
+            >
+              <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Verify OTP</DialogTitle>
+                </DialogHeader>
+                <div className="flex flex-col gap-4 py-4">
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    Enter the 6-digit OTP sent to you. (Hint: Use 123456 for
+                    testing)
+                  </p>
+                  <div className="flex flex-col gap-2">
+                    <Label htmlFor="otp">OTP Code</Label>
+                    <Input
+                      id="otp"
+                      type="text"
+                      placeholder="123456"
+                      value={otpInput}
+                      onChange={(e) => setOtpInput(e.target.value)}
+                    />
+                    {otpError && (
+                      <p className="text-xs text-red-500">{otpError}</p>
+                    )}
+                  </div>
+                  <Button onClick={submitOtp}>Verify & Login</Button>
+                </div>
+              </DialogContent>
+            </Dialog>
           </>
         )}{" "}
       </div>
@@ -151,6 +256,7 @@ const Header = () => {
         onclose={() => setisDialogueOpen(false)}
         mode="create"
       />
+      <div id="recaptcha-container"></div>
     </header>
   );
 };

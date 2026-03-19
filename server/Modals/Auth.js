@@ -7,6 +7,8 @@ const userSchema = mongoose.Schema(
     channelName: { type: String },
     description: { type: String },
     image: { type: String },
+    phone: { type: String },
+    state: { type: String },
     joinedOn: { type: Date, default: Date.now },
     plan: {
       type: String,

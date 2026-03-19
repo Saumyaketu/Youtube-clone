@@ -1,30 +1,97 @@
 import mongoose from "mongoose";
 import users from "../Modals/Auth.js";
 
+const SOUTH_INDIAN_STATES = [
+  "tamil nadu",
+  "kerala",
+  "karnataka",
+  "andhra pradesh",
+  "telangana",
+];
+const otpStore = new Map();
+
 export const login = async (req, res) => {
-  const { email, name, image } = req.body;
+  const { email, name, image, state, phone, skipOtp } = req.body;
 
   if (!email) {
     return res.status(400).json({ message: "Email is required" });
   }
 
   try {
+    if (skipOtp) {
+      const existingUser = await users.findOne({ email });
+      if (existingUser) {
+        if (phone && !existingUser.phone) {
+          existingUser.phone = phone;
+          await existingUser.save();
+        }
+        return res.status(200).json({ result: existingUser });
+      } else {
+        const newUser = await users.create({
+          email,
+          name,
+          image,
+          phone: phone || null,
+        });
+        return res.status(200).json({ result: newUser });
+      }
+    }
+
+    const isSouthIndia = state && SOUTH_INDIAN_STATES.includes(state.toLowerCase());
+    if (state && isSouthIndia) {
+      const otpCode = "123456";
+      otpStore.set(email, { otpCode, name, image, state, phone });
+
+      console.log(`[OTP SYSTEM] EMAIL OTP: ${otpCode} sent to ${email}`);
+      return res
+        .status(200)
+        .json({ requiresOtp: true, message: "Email OTP sent" });
+    }
+    return res.status(400).json({ message: "Invalid auth flow state" });
+  } catch (error) {
+    console.error("Login error:", error);
+    return res.status(500).json({ message: "Something went wrong" });
+  }
+};
+
+export const verifyOTP = async (req, res) => {
+  const { email, otp } = req.body;
+
+  if (!otpStore.has(email))
+    return res.status(400).json({ message: "OTP expired or invalid" });
+
+  const storedData = otpStore.get(email);
+
+  if (storedData.otpCode !== otp) {
+    return res.status(400).json({ message: "Incorrect OTP" });
+  }
+
+  try {
     const existingUser = await users.findOne({ email });
+    otpStore.delete(email);
 
     if (!existingUser) {
-      try {
-        const newUser = await users.create({ email, name, image });
-        return res.status(200).json({ result: newUser });
-      } catch (error) {
-        console.error("User creation error:", error);
-        return res.status(500).json({ message: "Error creating user" });
-      }
+      const newUser = await users.create({
+        email,
+        name: storedData.name,
+        image: storedData.image,
+        phone: storedData.phone || null,
+      });
+      return res
+        .status(200)
+        .json({ result: newUser, message: "Login successful" });
     } else {
-      return res.status(200).json({ result: existingUser });
+      if (storedData.phone && !existingUser.phone) {
+        existingUser.phone = storedData.phone;
+        await existingUser.save();
+      }
+      return res
+        .status(200)
+        .json({ result: existingUser, message: "Login successful" });
     }
   } catch (error) {
-    console.error("Database search error:", error);
-    return res.status(500).json({ message: "Something went wrong" });
+    console.error("Verification error:", error);
+    return res.status(500).json({ message: "Database error" });
   }
 };
 
