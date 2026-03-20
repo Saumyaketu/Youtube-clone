@@ -65,11 +65,11 @@ const HistoryContent = () => {
   if (!user) {
     return (
       <div className="text-center py-12">
-        <Clock className="w-16 h-16 mx-auto text-gray-400 mb-4" />
-        <h2 className="text-xl font-semibold mb-2">
+        <Clock className="w-16 h-16 mx-auto text-gray-400 dark:text-gray-300 mb-4" />
+        <h2 className="text-xl font-semibold mb-2 dark:text-white">
           Keep track of what you watch
         </h2>
-        <p className="text-gray-600">
+        <p className="text-gray-600 dark:text-gray-300">
           Watch history isn't viewable when signed out.
         </p>
       </div>
@@ -79,9 +79,9 @@ const HistoryContent = () => {
   if (history.length === 0) {
     return (
       <div className="text-center py-12">
-        <Clock className="w-16 h-16 mx-auto text-gray-400 mb-4" />
-        <h2 className="text-xl font-semibold mb-2">No watch history yet</h2>
-        <p className="text-gray-600">Videos you watch will appear here</p>
+        <Clock className="w-16 h-16 mx-auto text-gray-400 dark:text-gray-300 mb-4" />
+        <h2 className="text-xl font-semibold mb-2 dark:text-white">No watch history yet</h2>
+        <p className="text-gray-600 dark:text-gray-300">Videos you watch will appear here</p>
       </div>
     );
   }
@@ -89,7 +89,7 @@ const HistoryContent = () => {
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <p className="text-sm text-gray-600">{history.length} videos</p>
+        <p className="text-sm text-gray-600 dark:text-gray-300">{history.length} videos</p>
       </div>
 
       <div className="space-y-4">
@@ -102,7 +102,7 @@ const HistoryContent = () => {
           return (
             <div key={item._id} className="flex gap-4 group">
               <Link href={`/watch/${item.videoid._id}`} className="shrink-0">
-                <div className="relative w-40 aspect-video bg-gray-100 rounded overflow-hidden">
+                <div className="relative w-40 aspect-video bg-gray-100 rounded overflow-hidden dark:bg-gray-800">
                   <img
                     src={thumbnailUrl}
                     alt={item.videoid.videotitle}
@@ -120,13 +120,13 @@ const HistoryContent = () => {
                     {item.videoid.videotitle}
                   </h3>
                 </Link>
-                <p className="text-sm text-gray-600">
-                  {item.videoid.videochannel}
-                </p>
-                <p className="text-sm text-gray-600">
-                  {item.videoid.views?.toLocaleString() || 0} views •{" "}
-                  {formatDistanceToNow(new Date(item.createdAt))} ago
-                </p>
+                  <p className="text-sm text-gray-600 dark:text-gray-300">
+                    {item.videoid.videochannel}
+                  </p>
+                  <p className="text-sm text-gray-600 dark:text-gray-300">
+                    {item.videoid.views?.toLocaleString() || 0} views •{" "}
+                    {formatDistanceToNow(new Date(item.createdAt))} ago
+                  </p>
               </div>
 
               <DropdownMenu>
@@ -139,7 +139,7 @@ const HistoryContent = () => {
                     <MoreVertical className="w-4 h-4" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
+                  <DropdownMenuContent align="end" className="dark:bg-gray-800 dark:text-gray-100">
                   <DropdownMenuItem
                     onClick={() => handleRemoveHistory(item._id)}
                   >

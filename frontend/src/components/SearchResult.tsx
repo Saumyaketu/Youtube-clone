@@ -17,7 +17,7 @@ const SearchResult = ({ query }: any) => {
   if (!query || !query.trim()) {
     return (
       <div className="text-center py-12">
-        <p className="text-gray-600">Enter a search term to find videos</p>
+        <p className="text-gray-600 dark:text-gray-300">Enter a search term to find videos</p>
       </div>
     );
   }
@@ -49,15 +49,15 @@ const SearchResult = ({ query }: any) => {
 
   if (video === null) {
     return (
-      <div className="text-center py-12 text-gray-500">Loading results...</div>
+      <div className="text-center py-12 text-gray-500 dark:text-gray-300">Loading results...</div>
     );
   }
 
-  if (video.length === 0) {
+    if (video.length === 0) {
     return (
       <div className="text-center py-12">
-        <h1 className="text-xl font-semibold mb-2">No results found</h1>
-        <p className="text-gray-600">
+        <h1 className="text-xl font-semibold mb-2 dark:text-white">No results found</h1>
+        <p className="text-gray-600 dark:text-gray-300">
           Try different keywords or remove search filters
         </p>
       </div>
@@ -77,7 +77,7 @@ const SearchResult = ({ query }: any) => {
             return (
               <div key={item._id} className="flex gap-4 group">
                 <Link href={`/watch/${item._id}`} className="shrink-0">
-                  <div className="relative w-80 aspect-video bg-gray-100 rounded-lg overflow-hidden">
+                  <div className="relative w-80 aspect-video bg-gray-100 rounded-lg overflow-hidden dark:bg-gray-800">
                     <img
                       src={thumbnailUrl}
                       alt={item.videotitle}
@@ -112,16 +112,16 @@ const SearchResult = ({ query }: any) => {
                   >
                     <Avatar className="w-6 h-6">
                       <AvatarImage src="/placeholder.svg?height=24&width=24" />
-                      <AvatarFallback className="text-xs">
+                      <AvatarFallback className="text-xs dark:text-white">
                         {item.videochannel?.[0] || "U"}
                       </AvatarFallback>
                     </Avatar>
-                    <span className="text-sm text-gray-600">
+                    <span className="text-sm text-gray-600 dark:text-gray-300">
                       {item.videochannel}
                     </span>
                   </Link>
 
-                  <p className="text-sm text-gray-700 line-clamp-2">
+                  <p className="text-sm text-gray-700 dark:text-gray-300 line-clamp-2">
                     {item.description || "No description available."}
                   </p>
                 </div>
@@ -132,7 +132,7 @@ const SearchResult = ({ query }: any) => {
       )}
 
       <div className="text-center py-8">
-        <p className="text-gray-600">
+        <p className="text-gray-600 dark:text-gray-300">
           Showing {video.length} results for "{query}"
         </p>
       </div>

@@ -26,7 +26,7 @@ const RelatedVideos = ({ videos }: any) => {
             href={`/watch/${video._id}`}
             className="flex gap-2 group"
           >
-            <div className="relative w-40 aspect-video bg-gray-100 rounded overflow-hidden shrink-0">
+            <div className="relative w-40 aspect-video bg-gray-100 rounded overflow-hidden shrink-0 dark:bg-gray-800">
               <img
                 src={thumbnailUrl}
                 alt={video.videotitle}
@@ -37,11 +37,11 @@ const RelatedVideos = ({ videos }: any) => {
                   </div>
             </div>
             <div className="flex-1 min-w-0">
-              <h3 className="font-medium text-sm line-clamp-2 group-hover:text-blue-600">
+              <h3 className="font-medium text-sm line-clamp-2 group-hover:text-blue-600 dark:group-hover:text-blue-400">
                 {video.videotitle}
               </h3>
-              <p className="text-xs text-gray-600 mt-1">{video.videochannel}</p>
-              <p className="text-xs text-gray-600">
+              <p className="text-xs text-gray-600 dark:text-gray-300 mt-1">{video.videochannel}</p>
+              <p className="text-xs text-gray-600 dark:text-gray-300">
                 {video.views?.toLocaleString() || 0} views •{" "}
                 {formatDistanceToNow(new Date(video.createdAt))} ago
               </p>

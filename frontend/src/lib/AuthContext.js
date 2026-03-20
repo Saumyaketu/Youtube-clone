@@ -27,9 +27,10 @@ export const UserProvider = ({ children }) => {
   const [pendingEmail, setPendingEmail] = useState("");
   const [confirmationResult, setConfirmationResult] = useState(null);
   const [pendingUserData, setPendingUserData] = useState(null);
+  const [isDarkMode, setIsDarkMode] = useState(true);
 
   useEffect(() => {
-    const fetchLocationAndTheme = async () => {
+    const fetchLocation = async () => {
       try {
         const response = await fetch("https://ipapi.co/json/");
         const data = await response.json();
@@ -39,19 +40,13 @@ export const UserProvider = ({ children }) => {
         const currentHour = new Date().getHours();
         const isTimeBetween10And12 = currentHour >= 10 && currentHour < 12;
         const isSouthIndia = userState && SOUTH_INDIAN_STATES.includes(userState);
-
-        const root = window.document.documentElement;
-        if (isTimeBetween10And12 && isSouthIndia) {
-          root.classList.remove("dark");
-        } else {
-          root.classList.add("dark");
-        }
+        setIsDarkMode(!(isSouthIndia && isTimeBetween10And12));
       } catch (error) {
         console.error("Location fetch failed", error);
-        window.document.documentElement.classList.add("dark");
+        setIsDarkMode(true);
       }
     };
-    fetchLocationAndTheme();
+    fetchLocation();
   }, []);
 
   const login = (userData) => {
@@ -206,6 +201,7 @@ export const UserProvider = ({ children }) => {
         showOtpModal,
         setShowOtpModal,
         verifyOtpAndLogin,
+        isDarkMode,
       }}
     >
       {children}

@@ -353,7 +353,7 @@ const Comments = ({ videoId }: any) => {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold">{comments.length} Comments</h2>
+        <h2 className="text-xl font-semibold dark:text-white">{comments.length} Comments</h2>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" size="sm" className="flex gap-2">
@@ -362,7 +362,7 @@ const Comments = ({ videoId }: any) => {
               <ChevronDown className="w-3 h-3 opacity-50" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
+          <DropdownMenuContent align="end" className="dark:bg-gray-800 dark:text-gray-100">
             {LANGUAGES.map((lang) => (
               <DropdownMenuItem
                 key={lang.code}
@@ -385,7 +385,7 @@ const Comments = ({ videoId }: any) => {
             <AvatarFallback>{user.name?.[0] || "U"}</AvatarFallback>
           </Avatar>
           <div className="flex-1 space-y-2">
-            <div className="flex items-center gap-2 text-xs text-gray-500 mb-1">
+            <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 mb-1">
               <MapPin className="w-3 h-3" />
               <span>Posting from: {userCity}</span>
             </div>
@@ -405,7 +405,7 @@ const Comments = ({ videoId }: any) => {
               </Button>
               <Button
                 variant="ghost"
-                className="bg-blue-300 hover:bg-blue-400"
+                className="bg-blue-300 hover:bg-blue-400 dark:bg-blue-600 dark:hover:bg-blue-500"
                 size="sm"
                 onClick={handleSubmitComment}
                 disabled={!newComment.trim() || isSubmitting}
@@ -419,9 +419,9 @@ const Comments = ({ videoId }: any) => {
 
       <div className="space-y-4">
         {comments.length === 0 ? (
-          <p className="text-sm text-gray-500 italic">
-            No comments yet. Be the first to comment!
-          </p>
+          <p className="text-sm text-gray-500 dark:text-gray-400 italic">
+              No comments yet. Be the first to comment!
+            </p>
         ) : (
           comments.map((comment) => (
             <div key={comment._id} className="flex gap-4">
@@ -435,12 +435,12 @@ const Comments = ({ videoId }: any) => {
                     {comment.usercommented}
                   </span>
                   {comment.city && (
-                    <span className="flex items-center gap-1 text-xs text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">
+                    <span className="flex items-center gap-1 text-xs text-blue-600 dark:text-blue-300 bg-blue-50 dark:bg-blue-900 px-2 py-0.5 rounded-full">
                       <MapPin className="w-3 h-3" />
                       {comment.city}
                     </span>
                   )}
-                  <span className="text-xs text-gray-600">
+                  <span className="text-xs text-gray-600 dark:text-gray-400">
                     {formatDistanceToNow(new Date(comment.commentedon))} ago
                   </span>
                 </div>
@@ -477,8 +477,8 @@ const Comments = ({ videoId }: any) => {
                     <p className="text-sm">{comment.commentbody}</p>
 
                     {translatedComments[comment._id] && (
-                      <div className="mt-2 p-2 bg-gray-50 rounded text-sm border border-gray-100">
-                        <div className="flex items-center gap-1 text-xs text-gray-500 mb-1">
+                      <div className="mt-2 p-2 bg-gray-50 rounded text-sm border border-gray-100 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100">
+                          <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 mb-1">
                           <Globe className="w-3 h-3" />
                           <span>Translated to {LANGUAGES.find((l) => l.code === targetLang)?.name}:</span>
                         </div>

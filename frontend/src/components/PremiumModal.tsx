@@ -89,23 +89,23 @@ const PremiumModal = ({ isOpen, onClose }: PremiumModalProps) => {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="bg-white rounded-lg p-6 max-w-md w-full relative">
+      <div className="bg-white rounded-lg p-6 max-w-md w-full relative dark:bg-gray-900 dark:text-gray-100">
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-gray-500 hover:text-black"
+          className="absolute top-4 right-4 text-gray-500 hover:text-black dark:text-gray-400 dark:hover:text-white"
         >
           <X className="w-5 h-5" />
         </button>
 
-        <h2 className="text-2xl font-bold mb-4">Upgrade to Keep Watching</h2>
-        <p className="text-gray-600 mb-6">
+        <h2 className="text-2xl font-bold mb-4 dark:text-white">Upgrade to Keep Watching</h2>
+        <p className="text-gray-600 mb-6 dark:text-gray-300">
           You've reached your watch limit. Upgrade to unlock more time and
           unlimited downloads!
         </p>
 
         <div className="grid md:grid-cols-3 gap-4">
           {/* Bronze Plan */}
-          <div className="border rounded-lg p-5 bg-orange-50 flex flex-col">
+          <div className="border rounded-lg p-5 bg-orange-50 flex flex-col dark:bg-orange-900">
             <h3 className="font-semibold text-xl text-orange-800 border-b pb-2 mb-4">
               Bronze
             </h3>
@@ -129,14 +129,14 @@ const PremiumModal = ({ isOpen, onClose }: PremiumModalProps) => {
           </div>
 
           {/* Silver Plan */}
-          <div className="border rounded-lg p-5 bg-gray-100 flex flex-col relative transform scale-105 shadow-lg">
+          <div className="border rounded-lg p-5 bg-gray-100 flex flex-col relative transform scale-105 shadow-lg dark:bg-gray-800 dark:border-gray-700">
             <div className="absolute top-0 right-0 bg-blue-600 text-white text-xs px-2 py-1 rounded-bl-lg rounded-tr-lg">
               Popular
             </div>
             <h3 className="font-semibold text-xl text-gray-800 border-b pb-2 mb-4">
               Silver
             </h3>
-            <ul className="space-y-3 text-sm text-gray-700 grow">
+            <ul className="space-y-3 text-sm text-gray-700 dark:text-gray-300 grow">
               <li className="flex items-center gap-2">
                 <Check className="w-4 h-4 text-green-600" /> 10 mins watch limit
               </li>
@@ -152,18 +152,18 @@ const PremiumModal = ({ isOpen, onClose }: PremiumModalProps) => {
             <Button
               disabled={loading}
               onClick={() => handlePayment("Silver")}
-              className="w-full mt-auto bg-gray-600 hover:bg-gray-700"
+              className="w-full mt-auto bg-gray-600 hover:bg-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600"
             >
               Select Silver
             </Button>
           </div>
 
           {/* Gold Plan */}
-          <div className="border rounded-lg p-5 bg-yellow-50 flex flex-col">
+          <div className="border rounded-lg p-5 bg-yellow-50 flex flex-col dark:bg-yellow-900">
             <h3 className="font-semibold text-xl text-yellow-800 border-b pb-2 mb-4">
               Gold
             </h3>
-            <ul className="space-y-3 text-sm text-gray-700 grow">
+            <ul className="space-y-3 text-sm text-gray-700 dark:text-gray-300 grow">
               <li className="flex items-center gap-2">
                 <Check className="w-4 h-4 text-green-600" /> Unlimited watch
                 time

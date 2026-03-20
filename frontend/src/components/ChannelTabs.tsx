@@ -14,7 +14,7 @@ const tabs = [
 const ChannelTabs = () => {
   const [activeTab, setActiveTab] = useState("videos");
   return (
-    <div className="border-b px-4">
+    <div className="border-b px-4 dark:border-gray-700">
       <div className="flex gap-8 overflow-x-auto">
         {tabs.map((tab) => (
           <Button
@@ -22,8 +22,8 @@ const ChannelTabs = () => {
             variant="ghost"
             className={`px-0 py-4 border-b-2 rounded-none ${
               activeTab === tab.id
-                ? "border-black text-black"
-                : "border-transparent text-gray-600 hover:text-black"
+                ? "border-black text-black dark:border-white dark:text-white"
+                : "border-transparent text-gray-600 hover:text-black dark:text-gray-300 dark:hover:text-white"
             }`}
             onClick={() => setActiveTab(tab.id)}
           >

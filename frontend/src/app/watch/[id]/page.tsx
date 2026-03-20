@@ -77,7 +77,7 @@ const Page = ({ params }: PageProps) => {
     );
   }
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-background text-foreground">
       <div className="max-w-7xl mx-auto p-4">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-4">
@@ -87,13 +87,13 @@ const Page = ({ params }: PageProps) => {
           </div>
           <div className="space-y-4">
             {(listType === "liked" || listType === "wl") && (
-              <div className="bg-gray-100 p-3 rounded-lg mb-2">
+              <div className="bg-popover p-3 rounded-lg mb-2">
                 <h3 className="font-semibold text-sm">
                   {listType === "liked"
                     ? "Liked Videos Queue"
                     : "Watch Later Queue"}
                 </h3>
-                <p className="text-xs text-gray-500">{videos.length} videos</p>
+                <p className="text-xs text-muted-foreground">{videos.length} videos</p>
               </div>
             )}
             <RelatedVideos videos={videos} />

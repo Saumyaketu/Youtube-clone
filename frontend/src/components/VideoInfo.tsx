@@ -198,12 +198,12 @@ const VideoInfo = ({ video }: any) => {
           </Avatar>
           <div>
             <h3 className="font-medium">{video.videochannel}</h3>
-            <p className="text-sm text-gray-600">1.2M subscribers</p>
+            <p className="text-sm text-gray-600 dark:text-gray-400">1.2M subscribers</p>
           </div>
           <Button className="ml-4">Subscribe</Button>
         </div>
         <div className="flex items-center gap-2">
-          <div className="flex items-center bg-gray-100 rounded-full">
+          <div className="flex items-center bg-gray-100 rounded-full dark:bg-gray-800">
             <Button
               onClick={handleLike}
               variant="ghost"
@@ -212,12 +212,14 @@ const VideoInfo = ({ video }: any) => {
             >
               <ThumbsUp
                 className={`w-5 h-5 mr-2 ${
-                  isLiked ? "fill-black text-black" : ""
+                  isLiked
+                    ? "fill-black text-black dark:fill-white dark:text-white"
+                    : "text-gray-600 dark:text-gray-300"
                 }`}
               />
               {likes.toLocaleString()}
             </Button>
-            <div className="w-px h-6 bg-gray-300" />
+            <div className="w-px h-6 bg-gray-300 dark:bg-gray-600" />
             <Button
               onClick={handleDislike}
               variant="ghost"
@@ -225,17 +227,19 @@ const VideoInfo = ({ video }: any) => {
               className="rounded-full"
             >
               <ThumbsDown
-                className={`w-5 h-5 mr-2 ${
-                  isDisliked ? "fill-black text-black" : ""
-                }`}
-              />
+                  className={`w-5 h-5 mr-2 ${
+                    isDisliked
+                      ? "fill-black text-black dark:fill-white dark:text-white"
+                      : "text-gray-600 dark:text-gray-300"
+                  }`}
+                />
               {dislikes.toLocaleString()}
             </Button>
           </div>
           <Button
             variant="ghost"
             size="sm"
-            className={`bg-gray-100 rounded-full ${
+            className={`bg-gray-100 rounded-full dark:bg-gray-800 ${
               isWatchlater ? "text-primary" : ""
             }`}
             onClick={handleWatchlater}
@@ -246,7 +250,7 @@ const VideoInfo = ({ video }: any) => {
           <Button
             variant="ghost"
             size="sm"
-            className="bg-gray-100 rounded-full"
+            className="bg-gray-100 rounded-full dark:bg-gray-800"
           >
             <Share className="w-5 h-5 mr-2" />
             Share
@@ -254,7 +258,7 @@ const VideoInfo = ({ video }: any) => {
           <Button
             variant="ghost"
             size="sm"
-            className="bg-gray-100 rounded-full"
+            className="bg-gray-100 rounded-full dark:bg-gray-800"
             onClick={handleDownload}
           >
             <Download className="w-5 h-5 mr-2" />
@@ -263,14 +267,14 @@ const VideoInfo = ({ video }: any) => {
           <Button
             variant="ghost"
             size="icon"
-            className="bg-gray-100 rounded-full"
+            className="bg-gray-100 rounded-full dark:bg-gray-800"
           >
             <MoreHorizontal className="w-5 h-5" />
           </Button>
         </div>
       </div>
-      <div className="bg-gray-100 rounded-lg p-4">
-        <div className="flex gap-4 text-sm font-medium mb-2">
+      <div className="bg-gray-100 rounded-lg p-4 dark:bg-gray-800">
+        <div className="flex gap-4 text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
           <span>{video.views.toLocaleString()} views</span>
           <span>{formatDistanceToNow(new Date(video.createdAt))} ago</span>
         </div>

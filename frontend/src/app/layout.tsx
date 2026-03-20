@@ -5,6 +5,7 @@ import Header from "../components/Header";
 import Sidebar from "../components/Sidebar";
 import { Toaster } from "../components/ui/sonner";
 import { UserProvider } from "../lib/AuthContext";
+import ThemeProvider from "../components/ThemeProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -29,17 +30,19 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground`}
       >
-        <UserProvider>
-          <Header />
-          <Toaster />
-          <div className="flex">
-            <Sidebar />
+        <ThemeProvider>
+          <UserProvider>
+            <Header />
+            <Toaster />
+            <div className="flex">
+              <Sidebar />
 
-            <main className="flex-1">{children}</main>
-          </div>
-        </UserProvider>
+              <main className="flex-1">{children}</main>
+            </div>
+          </UserProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

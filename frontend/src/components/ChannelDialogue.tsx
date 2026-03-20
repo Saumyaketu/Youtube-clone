@@ -84,7 +84,7 @@ const ChannelDialogue = ({ isopen, onclose, channeldata, mode }: any) => {
 
   return (
     <Dialog open={isopen} onOpenChange={onclose}>
-      <DialogContent className="sm:max-w-md md:max-w-lg">
+      <DialogContent className="sm:max-w-md md:max-w-lg dark:bg-gray-900 dark:text-gray-100">
         <DialogHeader>
           <DialogTitle>
             {mode === "create" ? "Create your channel" : "Edit your channel"}
