@@ -65,7 +65,7 @@ const WatchLaterContent = () => {
 
   if (!user) {
     return (
-      <div className="text-center py-12">
+      <div className="text-xl font-semibold mb-2 dark:text-white">
         <Clock className="w-16 h-16 mx-auto text-gray-400 mb-4" />
         <h2 className="text-xl font-semibold mb-2">Save videos for later</h2>
         <p className="text-gray-600">
@@ -77,7 +77,7 @@ const WatchLaterContent = () => {
 
   if (WatchLater.length === 0) {
     return (
-      <div className="text-center py-12">
+      <div className="text-xl font-semibold mb-2 dark:text-white">
         <Clock className="w-16 h-16 mx-auto text-gray-400 mb-4" />
         <h2 className="text-xl font-semibold mb-2">No video saved yet</h2>
         <p className="text-gray-600">

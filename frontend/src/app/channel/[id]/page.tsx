@@ -42,7 +42,7 @@ const page = () => {
     }
 
     return (
-      <div className="flex-1 min-h-screen bg-white">
+      <div className="flex-1 min-h-screen dark:bg-black-900 dark:text-white">
         <div className="max-w-full mx-auto">
           <ChannelHeader channel={channel} />
           <ChannelTabs />

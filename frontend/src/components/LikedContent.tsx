@@ -80,11 +80,11 @@ const LikedContent = () => {
   if (!user) {
     return (
       <div className="text-center py-12">
-        <Clock className="w-16 h-16 mx-auto text-gray-400 mb-4" />
-        <h2 className="text-xl font-semibold mb-2">
+        <Clock className="w-16 h-16 mx-auto text-gray-400 dark:text-gray-300 mb-4" />
+        <h2 className="text-xl font-semibold mb-2 dark:text-white">
           Keep track of videos you like
         </h2>
-        <p className="text-gray-600">Sign in to see your liked videos</p>
+        <p className="text-gray-600 dark:text-gray-300">Sign in to see your liked videos</p>
       </div>
     );
   }
@@ -92,9 +92,9 @@ const LikedContent = () => {
   if (likes.length === 0) {
     return (
       <div className="text-center py-12">
-        <Clock className="w-16 h-16 mx-auto text-gray-400 mb-4" />
-        <h2 className="text-xl font-semibold mb-2">No liked videos yet</h2>
-        <p className="text-gray-600">Videos you like will appear here</p>
+        <Clock className="w-16 h-16 mx-auto text-gray-400 dark:text-gray-300 mb-4" />
+        <h2 className="text-xl font-semibold mb-2 dark:text-white">No liked videos yet</h2>
+        <p className="text-gray-600 dark:text-gray-300">Videos you like will appear here</p>
       </div>
     );
   }
@@ -123,7 +123,7 @@ const LikedContent = () => {
           return (
             <div key={item._id} className="flex gap-4 group">
               <Link href={`/watch/${item.videoid._id}`} className="shrink-0">
-                <div className="relative w-40 aspect-video bg-gray-100 rounded overflow-hidden">
+                <div className="relative w-40 aspect-video bg-gray-100 rounded overflow-hidden dark:bg-gray-800">
                   <img
                     src={thumbnailUrl}
                     alt={item.videoid.videotitle}
@@ -137,18 +137,18 @@ const LikedContent = () => {
 
               <div className="flex-1 min-w-0">
                 <Link href={`/watch/${item.videoid._id}`}>
-                  <h3 className="font-medium text-sm line-clamp-2 group-hover:text-blue-600 mb-1">
+                  <h3 className="font-medium text-sm line-clamp-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 mb-1">
                     {item.videoid.videotitle}
                   </h3>
                 </Link>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-gray-600 dark:text-gray-300">
                   {item.videoid.videochannel}
                 </p>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-gray-600 dark:text-gray-300">
                   {item.videoid.views?.toLocaleString() || 0} views •{" "}
                   {formatDistanceToNow(new Date(item.videoid.createdAt))} ago
                 </p>
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                   Liked {formatDistanceToNow(new Date(item.createdAt))} ago
                 </p>
               </div>
@@ -163,7 +163,7 @@ const LikedContent = () => {
                     <MoreVertical className="w-4 h-4" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
+                <DropdownMenuContent align="end" className="dark:bg-gray-800 dark:text-gray-100">
                   <DropdownMenuItem
                     onClick={() => handleRemoveLike(item.videoid._id, item._id)}
                   >
