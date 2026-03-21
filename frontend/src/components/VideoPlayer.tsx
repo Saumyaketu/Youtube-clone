@@ -1,5 +1,5 @@
 "use client";
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import { useUser } from "../lib/AuthContext";
 import PremiumModal from "./PremiumModal";
 import { useRouter } from "next/navigation";
@@ -10,6 +10,8 @@ const VideoPlayer = ({ video, onNextVideo, onShowComments }: any) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const router = useRouter();
 
+  const [playableSrc, setPlayableSrc] = useState<string>("");
+
   const clickCountRef = useRef(0);
   const clickTimerRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -19,6 +21,41 @@ const VideoPlayer = ({ video, onNextVideo, onShowComments }: any) => {
     Silver: 10 * 60,
     Gold: Infinity,
   };
+
+  useEffect(() => {
+    let objectUrl: string | null = null;
+
+    const resolveVideoSource = async () => {
+      const defaultUrl = video?.filepath?.startsWith("http")
+        ? video.filepath
+        : `${process.env.NEXT_PUBLIC_BACKEND_URL}/${video?.filepath}`;
+
+      if ("caches" in window) {
+        try {
+          const cache = await caches.open("youtube-offline-videos");
+          const cachedResponse = await cache.match(defaultUrl);
+
+          if (cachedResponse) {
+            console.log("Playing video from offline storage!");
+            const blob = await cachedResponse.blob();
+            objectUrl = URL.createObjectURL(blob);
+            setPlayableSrc(objectUrl);
+            return;
+          }
+        } catch (error) {
+          console.error("Failed to load from cache", error);
+        }
+      }
+
+      setPlayableSrc(defaultUrl);
+    };
+
+    if (video) resolveVideoSource();
+
+    return () => {
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
+  }, [video]);
 
   const handleTimeUpdate = () => {
     if (!videoRef.current) return;
@@ -86,8 +123,10 @@ const VideoPlayer = ({ video, onNextVideo, onShowComments }: any) => {
       <div className="aspect-video bg-black rounded-lg overflow-hidden relative">
         <video
           ref={videoRef}
+          src={playableSrc}
           className="w-full h-full"
           controls
+          controlsList="nodownload"
           crossOrigin="anonymous"
           onTimeUpdate={handleTimeUpdate}
         >

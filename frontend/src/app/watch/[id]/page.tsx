@@ -28,8 +28,30 @@ const Page = ({ params }: PageProps) => {
   const commentsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    const loadFromLocalStorage = () => {
+      console.warn("Loading from Local Storage instantly...");
+      const stored = localStorage.getItem("offlineVideos");
+      if (stored) {
+        const offlineVideos = JSON.parse(stored);
+        const currentOfflineVideo = offlineVideos.find(
+          (vid: any) => vid._id === id,
+        );
+
+        if (currentOfflineVideo) {
+          setVideo(currentOfflineVideo);
+          setVideos(offlineVideos);
+        }
+      }
+      setLoading(false);
+    };
+
     const fetchVideo = async () => {
       if (!id || typeof id !== "string") return;
+      if (typeof navigator !== "undefined" && !navigator.onLine) {
+        loadFromLocalStorage();
+        return;
+      }
+
       try {
         const allVideosRes = await axiosInstance.get("/video/getall");
         const currentVideo = allVideosRes.data?.find(
@@ -56,7 +78,7 @@ const Page = ({ params }: PageProps) => {
           setVideos(allVideosRes.data);
         }
       } catch (error) {
-        console.error("Error fetching videos:", error);
+        loadFromLocalStorage();
       } finally {
         setLoading(false);
       }
@@ -117,7 +139,7 @@ const Page = ({ params }: PageProps) => {
               <Comments videoId={id} />
             </div>
           </div>
-          
+
           <div className="space-y-4">
             {(listType === "liked" || listType === "wl") && (
               <div className="bg-popover p-3 rounded-lg mb-2">

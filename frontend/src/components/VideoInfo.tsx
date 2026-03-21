@@ -14,6 +14,7 @@ import { formatDistanceToNow } from "date-fns";
 import { useUser } from "../lib/AuthContext";
 import axiosInstance from "../lib/AxiosInstance";
 import PremiumModal from "./PremiumModal";
+import DownloadButton from "./DownloadButton";
 
 const VideoInfo = ({ video }: any) => {
   const [likes, setLikes] = useState(video.Like || 0);
@@ -34,6 +35,7 @@ const VideoInfo = ({ video }: any) => {
       viewCountedRef.current = video._id;
 
       const addView = async () => {
+        if (!navigator.onLine) return;
         try {
           await axiosInstance.post(`/history/views/${video._id}`);
         } catch (error) {
@@ -48,6 +50,7 @@ const VideoInfo = ({ video }: any) => {
     if (!user?._id || !video?._id) return;
 
     const addToHistory = async () => {
+      if (!navigator.onLine) return;
       try {
         await axiosInstance.post(`/history/${video._id}`, {
           userId: user._id,
@@ -66,6 +69,7 @@ const VideoInfo = ({ video }: any) => {
     setIsDisliked(false);
 
     const fetchLikeStatus = async () => {
+      if (!navigator.onLine) return;
       if (!user?._id || !video?._id) return;
 
       try {
@@ -83,6 +87,7 @@ const VideoInfo = ({ video }: any) => {
     fetchLikeStatus();
 
     const fetchWatchlaterStatus = async () => {
+      if (!navigator.onLine) return;
       if (!user?._id || !video?._id) return;
       try {
         const res = await axiosInstance.get(
@@ -142,51 +147,6 @@ const VideoInfo = ({ video }: any) => {
     }
   };
 
-  const handleDownload = async () => {
-    if (!user) {
-      alert("Please sign in to download videos.");
-      return;
-    }
-
-    try {
-      const checkRes = await axiosInstance.get(
-        `/user/check-download/${user._id}`,
-      );
-
-      if (checkRes.data.allowed) {
-        const normalizedPath = video.filepath.replace(/\\/g, "/");
-        const fileUrl = `${process.env.NEXT_PUBLIC_BACKEND_URL}/${normalizedPath}`;
-
-        const response = await axiosInstance.get(fileUrl, {
-          responseType: "blob",
-        });
-
-        const blob = new Blob([response.data], {
-          type: video.filetype || "video/mp4",
-        });
-        const localUrl = window.URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.href = localUrl;
-        link.setAttribute("download", video.filename || "video.mp4");
-        link.setAttribute("target", "_blank");
-        document.body.appendChild(link);
-        link.click();
-        link.remove();
-
-        await axiosInstance.post(`/user/track-download/${user._id}`);
-      } else {
-        setShowPremiumModal(true);
-      }
-    } catch (error: any) {
-      if (error.response && error.response.status === 403) {
-        setShowPremiumModal(true);
-      } else {
-        console.error("Download error:", error);
-        alert("Error trying to download the video.");
-      }
-    }
-  };
-
   return (
     <div className="space-y-4">
       <h1 className="text-xl font-semibold">{video.videotitle}</h1>
@@ -198,7 +158,9 @@ const VideoInfo = ({ video }: any) => {
           </Avatar>
           <div>
             <h3 className="font-medium">{video.videochannel}</h3>
-            <p className="text-sm text-gray-600 dark:text-gray-400">1.2M subscribers</p>
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              1.2M subscribers
+            </p>
           </div>
           <Button className="ml-4">Subscribe</Button>
         </div>
@@ -227,12 +189,12 @@ const VideoInfo = ({ video }: any) => {
               className="rounded-full"
             >
               <ThumbsDown
-                  className={`w-5 h-5 mr-2 ${
-                    isDisliked
-                      ? "fill-black text-black dark:fill-white dark:text-white"
-                      : "text-gray-600 dark:text-gray-300"
-                  }`}
-                />
+                className={`w-5 h-5 mr-2 ${
+                  isDisliked
+                    ? "fill-black text-black dark:fill-white dark:text-white"
+                    : "text-gray-600 dark:text-gray-300"
+                }`}
+              />
               {dislikes.toLocaleString()}
             </Button>
           </div>
@@ -255,15 +217,8 @@ const VideoInfo = ({ video }: any) => {
             <Share className="w-5 h-5 mr-2" />
             Share
           </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="bg-gray-100 rounded-full dark:bg-gray-800"
-            onClick={handleDownload}
-          >
-            <Download className="w-5 h-5 mr-2" />
-            Download
-          </Button>
+
+          <DownloadButton video={video} />
           <Button
             variant="ghost"
             size="icon"

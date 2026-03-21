@@ -1,0 +1,114 @@
+"use client";
+import React, { useEffect, useState } from "react";
+import VideoCard from "@/src/components/VideoCard";
+
+const DownloadsPage = () => {
+  const [videos, setVideos] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadOfflineVideos = () => {
+      const stored = localStorage.getItem("offlineVideos");
+      if (stored) {
+        try {
+          setVideos(JSON.parse(stored));
+        } catch (error) {
+          console.error("Failed to parse offline videos", error);
+        }
+      }
+      setLoading(false);
+    };
+
+    loadOfflineVideos();
+  }, []);
+
+  const removeDownload = async (videoId: string, videoUrl: string) => {
+    const updatedVideos = videos.filter((v) => v._id !== videoId);
+    setVideos(updatedVideos);
+    localStorage.setItem("offlineVideos", JSON.stringify(updatedVideos));
+
+    if ("caches" in window) {
+      try {
+        const cache = await caches.open("youtube-offline-videos");
+        await cache.delete(videoUrl);
+        console.log("Video permanently removed from offline storage.");
+      } catch (error) {
+        console.error("Failed to remove video from cache", error);
+      }
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <h1 className="text-xl font-semibold">Loading your library...</h1>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-background text-foreground">
+      <div className="max-w-7xl mx-auto p-4">
+        <h1 className="text-2xl font-bold mb-6">Offline Downloads</h1>
+
+        {videos.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-[50vh] text-muted-foreground">
+            <svg
+              className="w-16 h-16 mb-4 opacity-30"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+              />
+            </svg>
+            <p className="text-lg font-medium">No videos downloaded yet.</p>
+            <p className="text-sm">
+              Videos you download will appear here for offline viewing.
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {videos.map((video) => {
+              const videoUrl = video?.filepath?.startsWith("http")
+                ? video.filepath
+                : `${process.env.NEXT_PUBLIC_BACKEND_URL}/${video?.filepath}`;
+
+              return (
+                <div key={video._id} className="relative group">
+                  <VideoCard video={video} />
+
+                  <button
+                    onClick={() => removeDownload(video._id, videoUrl)}
+                    className="absolute top-2 right-2 bg-red-600/90 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity z-10 hover:bg-red-700"
+                    title="Remove from downloads"
+                  >
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                      />
+                    </svg>
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default DownloadsPage;
