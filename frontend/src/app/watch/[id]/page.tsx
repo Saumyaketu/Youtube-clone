@@ -5,8 +5,8 @@ import VideoInfo from "@/src/components/VideoInfo";
 import VideoPlayer from "@/src/components/VideoPlayer";
 import axiosInstance from "@/src/lib/AxiosInstance";
 import { useUser } from "@/src/lib/AuthContext";
-import { useSearchParams } from "next/navigation";
-import React, { useEffect, useState, use } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
+import React, { useEffect, useState, use, useRef } from "react";
 
 type PageProps = {
   params: Promise<{
@@ -19,10 +19,13 @@ const Page = ({ params }: PageProps) => {
   const searchParams = useSearchParams();
   const listType = searchParams.get("list");
   const { user } = useUser();
+  const router = useRouter();
 
   const [videos, setVideos] = useState<any[]>([]);
   const [video, setVideo] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+
+  const commentsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const fetchVideo = async () => {
@@ -61,6 +64,29 @@ const Page = ({ params }: PageProps) => {
     fetchVideo();
   }, [id, listType, user]);
 
+  const handleNextVideo = () => {
+    if (!videos || videos.length === 0) return;
+
+    const currentIndex = videos.findIndex((v: any) => v._id === id || v === id);
+
+    if (currentIndex !== -1 && currentIndex + 1 < videos.length) {
+      const nextVid = videos[currentIndex + 1];
+      const nextId = nextVid._id || nextVid;
+      let url = `/watch/${nextId}`;
+      if (listType) url += `?list=${listType}`;
+      router.push(url);
+    }
+  };
+
+  const handleShowComments = () => {
+    if (commentsRef.current) {
+      commentsRef.current.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -81,10 +107,17 @@ const Page = ({ params }: PageProps) => {
       <div className="max-w-7xl mx-auto p-4">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-4">
-            <VideoPlayer video={video} />
+            <VideoPlayer
+              video={video}
+              onNextVideo={handleNextVideo}
+              onShowComments={handleShowComments}
+            />
             <VideoInfo video={video} />
-            <Comments videoId={id} />
+            <div ref={commentsRef}>
+              <Comments videoId={id} />
+            </div>
           </div>
+          
           <div className="space-y-4">
             {(listType === "liked" || listType === "wl") && (
               <div className="bg-popover p-3 rounded-lg mb-2">
@@ -93,7 +126,9 @@ const Page = ({ params }: PageProps) => {
                     ? "Liked Videos Queue"
                     : "Watch Later Queue"}
                 </h3>
-                <p className="text-xs text-muted-foreground">{videos.length} videos</p>
+                <p className="text-xs text-muted-foreground">
+                  {videos.length} videos
+                </p>
               </div>
             )}
             <RelatedVideos videos={videos} />
