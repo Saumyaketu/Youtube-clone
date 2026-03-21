@@ -30,6 +30,17 @@ export const UserProvider = ({ children }) => {
   const [isDarkMode, setIsDarkMode] = useState(true);
 
   useEffect(() => {
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      try {
+        setUser(JSON.parse(storedUser));
+      } catch (error) {
+        console.error("Failed to parse stored user", error);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
     const fetchLocation = async () => {
       try {
         const response = await fetch("https://ipapi.co/json/");
