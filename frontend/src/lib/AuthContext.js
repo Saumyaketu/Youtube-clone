@@ -54,6 +54,7 @@ export const UserProvider = ({ children }) => {
         setIsDarkMode(!(isSouthIndia && isTimeBetween10And12));
       } catch (error) {
         console.error("Location fetch failed", error);
+        setLocationState("unknown");
         setIsDarkMode(true);
       }
     };
@@ -119,9 +120,10 @@ export const UserProvider = ({ children }) => {
           setPendingUserData(payload);
           setupRecaptcha();
           const appVerifier = window.recaptchaVerifier;
-          const formattedPhone = validPhone.startsWith("+91")
-            ? validPhone
-            : `+91${validPhone.replace(/\D/g, "")}`;
+          const cleanPhone = validPhone.replace(/\s+/g, "");
+          const formattedPhone = cleanPhone.startsWith("+91")
+            ? cleanPhone
+            : `+91${cleanPhone.replace(/\D/g, "")}`;
           const confirmation = await signInWithPhoneNumber(
             auth,
             formattedPhone,
