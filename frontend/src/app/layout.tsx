@@ -37,10 +37,12 @@ export default function RootLayout({
           <UserProvider>
             <Header />
             <Toaster />
-            <div className="flex">
+            <div className="flex relative">
               <Sidebar />
-
-              <main className="flex-1">{children}</main>
+              
+              <main className="flex-1 pb-16 md:pb-0 w-full overflow-x-hidden">
+                {children}
+              </main>
             </div>
           </UserProvider>
         </ThemeProvider>

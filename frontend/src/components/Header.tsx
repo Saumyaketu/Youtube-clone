@@ -54,7 +54,9 @@ const Header = () => {
   };
 
   const onSignInClick = () => {
-    const isSouthIndia = locationState && SOUTH_INDIAN_STATES.includes(locationState.toLowerCase());
+    const isSouthIndia =
+      locationState &&
+      SOUTH_INDIAN_STATES.includes(locationState.toLowerCase());
     if (locationState && !isSouthIndia) {
       setIsLoginModalOpen(true);
     } else {
@@ -67,6 +69,7 @@ const Header = () => {
     setIsLoginModalOpen(false);
     handleGoogleSignIn(phone);
   };
+
   const submitOtp = async () => {
     setOtpError("");
     const success = await verifyOtpAndLogin(otpInput);
@@ -76,31 +79,37 @@ const Header = () => {
   };
 
   return (
-    <header className="flex items-center justify-between px-4 py-2 bg-background border-border border-b">
+    <header className="flex items-center justify-between px-4 py-2 bg-background border-border border-b sticky top-0 z-50">
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon">
+        <Button variant="ghost" size="icon" className="hidden md:flex">
           <Menu className="w-6 h-6" />
         </Button>
         <Link href="/" className="flex items-center gap-1">
           <div className="bg-red-600 p-1 rounded">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill={isDarkMode ? "white" : "black"}>
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill={isDarkMode ? "white" : "black"}
+            >
               <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
             </svg>
           </div>
-            <span className="text-xl font-medium dark:text-white">YouTube</span>
-            <span className="text-xs text-gray-400 ml-1 dark:text-gray-300">IN</span>
+          <span className="text-xl font-medium dark:text-white hidden sm:block">
+            YouTube
+          </span>
         </Link>
       </div>
 
+      {/* Desktop Search Bar */}
       <form
         onSubmit={handleSearch}
-        className="flex items-center gap-2 flex-1 max-w-2xl mx-4"
+        className="hidden md:flex items-center gap-2 flex-1 max-w-2xl mx-4"
       >
         <div className="flex flex-1">
           <Input
             type="search"
             name="search"
-            id="search-navbar"
             placeholder="Search"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -113,15 +122,34 @@ const Header = () => {
             <Search className="w-5 h-5" />
           </Button>
         </div>
-        <Button type="button" variant="ghost" className="rounded-full">
+        <Button
+          type="button"
+          variant="ghost"
+          className="rounded-full bg-secondary"
+        >
           <Mic className="w-5 h-5" />
         </Button>
       </form>
 
-      <div className="flex items-center gap-2">
+      {/* Right Side Icons (Mobile + Desktop) */}
+      <div className="flex items-center gap-1 sm:gap-2">
+        {/* Mobile Search Icon */}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="md:hidden"
+          onClick={() => router.push("/search")}
+        >
+          <Search className="w-5 h-5" />
+        </Button>
+
         {user ? (
           <>
-            <Button variant="ghost" size="icon">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="hidden sm:inline-flex"
+            >
               <VideoIcon className="w-6 h-6" />
             </Button>
             <Button variant="ghost" size="icon">
@@ -149,7 +177,7 @@ const Header = () => {
                     <Link href={`/channel/${user?._id}`}>Your Channel</Link>
                   </DropdownMenuItem>
                 ) : (
-                  <div className="xp-2 py-1.5">
+                  <div className="px-2 py-1.5">
                     <Button
                       variant="secondary"
                       size="sm"
@@ -163,6 +191,15 @@ const Header = () => {
                 <DropdownMenuItem asChild>
                   <Link href="/history">History</Link>
                 </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/liked">Liked Videos</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/watch-later">Watch Later</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/downloads">Downloads</Link>
+                </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={logout}>Sign out</DropdownMenuItem>
               </DropdownMenuContent>
@@ -171,13 +208,12 @@ const Header = () => {
         ) : (
           <>
             <Button
-                className="flex items-center gap-2 bg-gray-500 hover:bg-gray-600 dark:bg-gray-700 dark:hover:bg-gray-600"
+              className="flex items-center gap-2 bg-gray-500 hover:bg-gray-600 dark:bg-gray-700 dark:hover:bg-gray-600"
               onClick={onSignInClick}
               disabled={locationState === null}
-              title={locationState === null ? "Detecting location..." : "Sign in"}
             >
               <User className="w-4 h-4" />
-              Sign in
+              <span className="hidden sm:inline">Sign in</span>
             </Button>
 
             <Dialog open={isLoginModalOpen} onOpenChange={setIsLoginModalOpen}>
@@ -244,7 +280,7 @@ const Header = () => {
               </DialogContent>
             </Dialog>
           </>
-        )}{" "}
+        )}
       </div>
       <ChannelDialogue
         isopen={isDialogueOpen}
