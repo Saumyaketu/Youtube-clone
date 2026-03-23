@@ -217,7 +217,7 @@ const Header = () => {
             </Button>
 
             <Dialog open={isLoginModalOpen} onOpenChange={setIsLoginModalOpen}>
-              <DialogContent className="sm:max-w-md">
+              <DialogContent className="sm:max-w-md top-[35%] translate-y-[-35%]">
                 <DialogHeader>
                   <DialogTitle>Enter Mobile Number</DialogTitle>
                 </DialogHeader>
@@ -253,7 +253,7 @@ const Header = () => {
                 setShowOtpModal(isOpen);
               }}
             >
-              <DialogContent className="sm:max-w-md">
+              <DialogContent className="sm:max-w-md top-[35%] translate-y-[-35%]">
                 <DialogHeader>
                   <DialogTitle>Verify OTP</DialogTitle>
                 </DialogHeader>

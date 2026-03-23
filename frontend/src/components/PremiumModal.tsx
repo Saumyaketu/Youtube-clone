@@ -88,8 +88,8 @@ const PremiumModal = ({ isOpen, onClose }: PremiumModalProps) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="bg-white rounded-lg p-6 max-w-md w-full relative dark:bg-gray-900 dark:text-gray-100">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+      <div className="bg-white rounded-lg p-6 max-w-4xl w-full max-h-[90dvh] overflow-y-auto relative dark:bg-gray-900 dark:text-gray-100">
         <button
           onClick={onClose}
           className="absolute top-4 right-4 text-gray-500 hover:text-black dark:text-gray-400 dark:hover:text-white"
@@ -103,7 +103,7 @@ const PremiumModal = ({ isOpen, onClose }: PremiumModalProps) => {
           unlimited downloads!
         </p>
 
-        <div className="grid md:grid-cols-3 gap-4">
+        <div className="grid md:grid-cols-3 gap-6">
           {/* Bronze Plan */}
           <div className="border rounded-lg p-5 bg-orange-50 flex flex-col dark:bg-orange-900">
             <h3 className="font-semibold text-xl text-orange-800 border-b pb-2 mb-4">
@@ -129,7 +129,7 @@ const PremiumModal = ({ isOpen, onClose }: PremiumModalProps) => {
           </div>
 
           {/* Silver Plan */}
-          <div className="border rounded-lg p-5 bg-gray-100 flex flex-col relative transform scale-105 shadow-lg dark:bg-gray-800 dark:border-gray-700">
+          <div className="border rounded-lg p-5 bg-gray-100 flex flex-col relative md:transform md:scale-105 shadow-lg dark:bg-gray-800 dark:border-gray-700">
             <div className="absolute top-0 right-0 bg-blue-600 text-white text-xs px-2 py-1 rounded-bl-lg rounded-tr-lg">
               Popular
             </div>
