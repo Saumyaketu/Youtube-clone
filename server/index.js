@@ -13,6 +13,7 @@ import watchlaterRoutes from "./routes/watchlater.js";
 import historyRoutes from "./routes/history.js";
 import commentRoutes from "./routes/comment.js";
 import paymentRoutes from "./routes/payment.js";
+import turnRoutes from "./routes/turn.js";
 
 dotenv.config();
 const app = express();
@@ -72,6 +73,7 @@ app.get("/", (req, res) => {
 
 app.use("/user", authRoutes);
 app.use("/video", videoRoutes);
+app.use("/turn", turnRoutes);
 app.use("/like", likeRoutes);
 app.use("/watch", watchlaterRoutes);
 app.use("/history", historyRoutes);

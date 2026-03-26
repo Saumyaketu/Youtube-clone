@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
+import axiosInstance from "@/src/lib/AxiosInstance";
 import io, { Socket } from "socket.io-client";
 import Peer from "simple-peer";
 
@@ -20,26 +21,29 @@ export default function VideoCall({ roomId }: VideoCallProps) {
   const recordedChunks = useRef<BlobPart[]>([]);
   const socketRef = useRef<Socket | null>(null);
 
-  const iceServers = [
-    { urls: "stun:stun.l.google.com:19302" },
-    { urls: "stun:stun1.l.google.com:19302" },
-    {
-      urls: process.env.NEXT_PUBLIC_TURN_URL || "",
-      username: process.env.NEXT_PUBLIC_TURN_USERNAME || "",
-      credential: process.env.NEXT_PUBLIC_TURN_PASSWORD || "",
-    },
-  ];
-
   useEffect(() => {
-    const SOCKET_URL = process.env.NEXT_PUBLIC_SOCKET_URL;
-    socketRef.current = io(SOCKET_URL, {
-      transports: ["websocket", "polling"],
-      secure: true,
-    });
+    const initializeCall = async () => {
+      try {
+        const turnRes = await axiosInstance.get("/turn");
+        const dynamicTurnServers = turnRes.data;
 
-    navigator.mediaDevices
-      .getUserMedia({ video: true, audio: true })
-      .then((currentStream) => {
+        const secureIceServers = [
+          { urls: "stun:stun.l.google.com:19302" },
+          { urls: "stun:stun1.l.google.com:19302" },
+          ...dynamicTurnServers,
+        ];
+
+        const SOCKET_URL = process.env.NEXT_PUBLIC_SOCKET_URL || "";
+        socketRef.current = io(SOCKET_URL, {
+          transports: ["websocket", "polling"],
+          secure: true,
+        });
+
+        const currentStream = await navigator.mediaDevices.getUserMedia({
+          video: true,
+          audio: true,
+        });
+
         setStream(currentStream);
         if (myVideo.current) myVideo.current.srcObject = currentStream;
 
@@ -50,7 +54,7 @@ export default function VideoCall({ roomId }: VideoCallProps) {
             initiator: true,
             trickle: false,
             stream: currentStream,
-            config: { iceServers },
+            config: { iceServers: secureIceServers },
           });
 
           peer.on("signal", (signal) => {
@@ -73,7 +77,7 @@ export default function VideoCall({ roomId }: VideoCallProps) {
             initiator: false,
             trickle: false,
             stream: currentStream,
-            config: { iceServers },
+            config: { iceServers: secureIceServers },
           });
 
           peer.on("signal", (signal) => {
@@ -105,13 +109,15 @@ export default function VideoCall({ roomId }: VideoCallProps) {
         socketRef.current?.on("room-full", () => {
           alert("This watch party is already full (max 2 people)!");
         });
-      })
-      .catch((error) => {
-        console.error("Camera/Mic Permission Denied:", error);
+      } catch (error) {
+        console.error("Initialization Failed:", error);
         alert(
           "Please allow camera and microphone permissions to use the Watch Party feature!",
         );
-      });
+      }
+    };
+
+    initializeCall();
 
     return () => {
       socketRef.current?.disconnect();
