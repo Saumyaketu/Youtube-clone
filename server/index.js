@@ -3,6 +3,9 @@ import cors from "cors";
 import dotenv from "dotenv";
 import bodyParser from "body-parser";
 import mongoose from "mongoose";
+import http from "http";
+import { Server } from "socket.io";
+
 import authRoutes from "./routes/auth.js";
 import videoRoutes from "./routes/video.js";
 import likeRoutes from "./routes/like.js";
@@ -14,9 +17,48 @@ import paymentRoutes from "./routes/payment.js";
 dotenv.config();
 const app = express();
 
+const httpServer = http.createServer(app);
+
+const io = new Server(httpServer, {
+  cors: {
+    origin: process.env.FRONTEND_URL,
+    methods: ["GET", "POST"],
+    credentials: true,
+  },
+});
+
+io.on('connection', (socket) => {
+  console.log('User connected to WebRTC signaling:', socket.id);
+
+  socket.on('join-room', (roomId) => {
+    const room = io.sockets.adapter.rooms.get(roomId);
+    const numClients = room ? room.size : 0;
+
+    if (numClients === 0) {
+      socket.join(roomId);
+    } else if (numClients === 1) {
+      socket.join(roomId);
+      socket.to(roomId).emit('user-connected', socket.id);
+    } else {
+      socket.emit('room-full'); 
+    }
+  });
+
+  socket.on('signal', (data) => {
+    io.to(data.userToSignal).emit('signal', {
+      signal: data.signal,
+      callerID: data.callerID
+    });
+  });
+
+  socket.on('disconnect', () => {
+    socket.broadcast.emit('user-disconnected', socket.id);
+  });
+});
+
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL || "http://localhost:3000",
+    origin: process.env.FRONTEND_URL,
     credentials: true,
   }),
 );
@@ -25,7 +67,7 @@ app.use(express.json({ limit: "30mb", extended: true }));
 app.use(express.urlencoded({ limit: "30mb", extended: true }));
 
 app.get("/", (req, res) => {
-  res.send("Youtube's backend is working");
+  res.send("Youtube's backend is working with WebRTC Signaling.");
 });
 
 app.use("/user", authRoutes);
@@ -43,8 +85,8 @@ mongoose
   .connect(DBURL)
   .then(() => {
     console.log("Mongodb connected");
-    app.listen(PORT, () => {
-      console.log(`Server running on port ${PORT}`);
+    httpServer.listen(PORT, () => {
+      console.log(`Express and Socket.io Server running on port ${PORT}`);
     });
   })
   .catch((error) => {

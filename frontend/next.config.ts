@@ -37,6 +37,14 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  async rewrites() {
+    return [
+      {
+        source: '/_next/webpack-hmr',
+        destination: '/_next/webpack-hmr',
+      },
+    ];
+  },
 };
 
 export default withSerwist(nextConfig);

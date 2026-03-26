@@ -7,6 +7,8 @@ import axiosInstance from "@/src/lib/AxiosInstance";
 import { useUser } from "@/src/lib/AuthContext";
 import { useSearchParams, useRouter } from "next/navigation";
 import React, { useEffect, useState, use, useRef } from "react";
+import VideoCall from "@/src/components/VideoCall";
+import { v4 as uuidv4 } from "uuid";
 
 type PageProps = {
   params: Promise<{
@@ -17,6 +19,7 @@ type PageProps = {
 const Page = ({ params }: PageProps) => {
   const { id } = use(params);
   const searchParams = useSearchParams();
+  const partyId = searchParams.get("party");
   const listType = searchParams.get("list");
   const { user } = useUser();
   const router = useRouter();
@@ -24,6 +27,10 @@ const Page = ({ params }: PageProps) => {
   const [videos, setVideos] = useState<any[]>([]);
   const [video, setVideo] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [showVideoCall, setShowVideoCall] = useState(!!partyId);
+  const [callRoomId, setCallRoomId] = useState(
+    partyId || `party-${uuidv4().slice(0, 8)}`,
+  );
 
   const commentsRef = useRef<HTMLDivElement>(null);
 
@@ -86,6 +93,17 @@ const Page = ({ params }: PageProps) => {
     fetchVideo();
   }, [id, listType, user]);
 
+  useEffect(() => {
+    if (showVideoCall && !partyId) {
+      const newUrl = `/watch/${id}?party=${callRoomId}${listType ? `&list=${listType}` : ""}`;
+      window.history.replaceState(
+        { ...window.history.state, as: newUrl, url: newUrl },
+        "",
+        newUrl,
+      );
+    }
+  }, [showVideoCall, callRoomId, id, partyId, listType]);
+
   const handleNextVideo = () => {
     if (!videos || videos.length === 0) return;
 
@@ -135,6 +153,22 @@ const Page = ({ params }: PageProps) => {
               onShowComments={handleShowComments}
             />
             <VideoInfo video={video} />
+
+            <div className="mt-4 mb-4 flex justify-end">
+              <button
+                onClick={() => setShowVideoCall(!showVideoCall)}
+                className={`px-4 py-2 rounded-full text-sm font-semibold transition ${
+                  showVideoCall
+                    ? "bg-red-500/10 text-red-500 hover:bg-red-500/20"
+                    : "bg-blue-600 text-white hover:bg-blue-700"
+                }`}
+              >
+                {showVideoCall ? "Close Video Call" : "📞 Watch with Friend"}
+              </button>
+            </div>
+
+            {showVideoCall && <VideoCall roomId={callRoomId} />}
+
             <div ref={commentsRef}>
               <Comments videoId={id} />
             </div>

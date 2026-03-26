@@ -10,7 +10,7 @@ const VideoPlayer = ({ video, onNextVideo, onShowComments }: any) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const router = useRouter();
 
-  const [playableSrc, setPlayableSrc] = useState<string>("");
+  const [playableSrc, setPlayableSrc] = useState<string>();
 
   const clickCountRef = useRef(0);
   const clickTimerRef = useRef<NodeJS.Timeout | null>(null);
