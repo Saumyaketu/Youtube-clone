@@ -28,32 +28,60 @@ const io = new Server(httpServer, {
   },
 });
 
-io.on('connection', (socket) => {
-  console.log('User connected to WebRTC signaling:', socket.id);
+const users = {};
+const socketToRoom = {};
 
-  socket.on('join-room', (roomId) => {
-    const room = io.sockets.adapter.rooms.get(roomId);
-    const numClients = room ? room.size : 0;
+io.on("connection", (socket) => {
+  console.log("User connected to WebRTC signaling:", socket.id);
 
-    if (numClients === 0) {
-      socket.join(roomId);
-    } else if (numClients === 1) {
-      socket.join(roomId);
-      socket.to(roomId).emit('user-connected', socket.id);
+  socket.on("join-room", (roomId) => {
+    if (users[roomId]) {
+      users[roomId].push(socket.id);
     } else {
-      socket.emit('room-full'); 
+      users[roomId] = [socket.id];
     }
+    socketToRoom[socket.id] = roomId;
+
+    const usersInThisRoom = users[roomId].filter((id) => id !== socket.id);
+
+    socket.emit("all-users", usersInThisRoom);
   });
 
-  socket.on('signal', (data) => {
-    io.to(data.userToSignal).emit('signal', {
-      signal: data.signal,
-      callerID: data.callerID
+  socket.on("video-play", (roomId) => {
+    socket.to(roomId).emit("sync-play");
+  });
+
+  socket.on("video-pause", (roomId) => {
+    socket.to(roomId).emit("sync-pause");
+  });
+
+  socket.on("video-seek", ({ roomId, time }) => {
+    socket.to(roomId).emit("sync-seek", time);
+  });
+
+  socket.on("sending-signal", (payload) => {
+    io.to(payload.userToSignal).emit("user-joined", {
+      signal: payload.signal,
+      callerID: payload.callerID,
     });
   });
 
-  socket.on('disconnect', () => {
-    socket.broadcast.emit('user-disconnected', socket.id);
+  socket.on("returning-signal", (payload) => {
+    io.to(payload.callerID).emit("receiving-returned-signal", {
+      signal: payload.signal,
+      id: socket.id,
+    });
+  });
+
+  socket.on("disconnect", () => {
+    const roomId = socketToRoom[socket.id];
+    let room = users[roomId];
+    if (room) {
+      room = room.filter((id) => id !== socket.id);
+      users[roomId] = room;
+      socket.broadcast.emit("user-disconnected", socket.id);
+    }
+    console.log("User disconnected:", socket.id);
   });
 });
 

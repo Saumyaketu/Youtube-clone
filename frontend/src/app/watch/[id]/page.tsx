@@ -151,19 +151,19 @@ const Page = ({ params }: PageProps) => {
               video={video}
               onNextVideo={handleNextVideo}
               onShowComments={handleShowComments}
+              roomId={showVideoCall ? callRoomId : null}
             />
             <VideoInfo video={video} />
 
             <div className="mt-4 mb-4 flex justify-end">
               <button
-                onClick={() => setShowVideoCall(!showVideoCall)}
-                className={`px-4 py-2 rounded-full text-sm font-semibold transition ${
-                  showVideoCall
-                    ? "bg-red-500/10 text-red-500 hover:bg-red-500/20"
-                    : "bg-blue-600 text-white hover:bg-blue-700"
-                }`}
+                onClick={() => {
+                  const newRoomId = `party-${uuidv4().slice(0, 8)}`;
+                  router.push(`/room/${newRoomId}?v=${id}`);
+                }}
+                className="px-4 py-2 rounded-full text-sm font-semibold bg-blue-600 text-white hover:bg-blue-700 transition shadow-lg shadow-blue-500/20"
               >
-                {showVideoCall ? "Close Video Call" : "📞 Watch with Friend"}
+                🍿 Start Watch Party
               </button>
             </div>
 
