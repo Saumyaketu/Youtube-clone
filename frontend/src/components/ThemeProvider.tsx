@@ -17,7 +17,7 @@ export default function ThemeProvider({ children }: { children: React.ReactNode 
     let cancelled = false;
     const detect = async () => {
       try {
-        const res = await fetch("https://ipapi.co/json/");
+        const res = await fetch("https://ipwho.is/");
         const data = await res.json();
         const userState = (data.region || "").toLowerCase();
 

@@ -43,7 +43,7 @@ export const UserProvider = ({ children }) => {
   useEffect(() => {
     const fetchLocation = async () => {
       try {
-        const response = await fetch("https://ipapi.co/json/");
+        const response = await fetch("https://ipwho.is/");
         const data = await response.json();
         const userState = data.region?.toLowerCase();
         setLocationState(userState);

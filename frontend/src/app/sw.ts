@@ -19,8 +19,8 @@ const serwist = new Serwist({
   runtimeCaching: [
     {
       matcher: ({ url }) =>
-        url.pathname.startsWith("/video-call") ||
-        url.pathname.startsWith("/room"),
+        url.pathname.includes("/video-call") ||
+        url.pathname.includes("/room"),
       handler: new NetworkOnly(),
     },
     ...defaultCache,
