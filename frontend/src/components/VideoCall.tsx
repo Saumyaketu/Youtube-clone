@@ -12,10 +12,15 @@ interface VideoCallProps {
 const Video = ({ peer }: { peer: Peer.Instance }) => {
   const ref = useRef<HTMLVideoElement>(null);
   useEffect(() => {
+    if (peer.streams && peer.streams.length > 0) {
+      if (ref.current) ref.current.srcObject = peer.streams[0];
+    }
     peer.on("stream", (stream) => {
       if (ref.current) ref.current.srcObject = stream;
     });
+    peer.on("error", (err) => console.error("WebRTC Peer Error:", err));
   }, [peer]);
+
   return (
     <video
       playsInline

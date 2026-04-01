@@ -1,6 +1,6 @@
 "use client";
 
-import React, { use } from "react";
+import React, { use, useState } from "react";
 import VideoCall from "@/src/components/VideoCall";
 import { Video } from "lucide-react";
 
@@ -12,6 +12,7 @@ type PageProps = {
 
 export default function MeetingRoomPage({ params }: PageProps) {
   const { roomId } = use(params);
+  const [hasJoined, setHasJoined] = useState(false);
 
   const copyInviteLink = () => {
     navigator.clipboard.writeText(window.location.href);
@@ -40,8 +41,19 @@ export default function MeetingRoomPage({ params }: PageProps) {
       </div>
 
       <div className="grow w-full max-w-6xl mx-auto">
+      {!hasJoined ? (
+        <div className="flex justify-center items-center h-64">
+           <button 
+             onClick={() => setHasJoined(true)}
+             className="px-6 py-3 bg-green-600 text-white font-bold rounded-lg"
+           >
+             Join Meeting
+           </button>
+        </div>
+      ) : (
         <VideoCall roomId={roomId} />
-      </div>
+      )}
+    </div>
     </div>
   );
 }

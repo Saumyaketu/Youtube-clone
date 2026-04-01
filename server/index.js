@@ -79,7 +79,7 @@ io.on("connection", (socket) => {
     if (room) {
       room = room.filter((id) => id !== socket.id);
       users[roomId] = room;
-      socket.broadcast.emit("user-disconnected", socket.id);
+      socket.to(roomId).emit("user-disconnected", socket.id);
     }
     console.log("User disconnected:", socket.id);
   });

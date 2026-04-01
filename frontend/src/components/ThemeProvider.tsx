@@ -17,9 +17,9 @@ export default function ThemeProvider({ children }: { children: React.ReactNode 
     let cancelled = false;
     const detect = async () => {
       try {
-        const res = await fetch("https://ipwho.is/");
+        const res = await fetch("https://get.geojs.io/v1/ip/geo.json");
         const data = await res.json();
-        const userState = (data.region || "").toLowerCase();
+        const userState = data.region ? data.region.toLowerCase() : "unknown";
 
         const currentHour = new Date().getHours();
         const isTimeBetween10And12 = currentHour >= 10 && currentHour < 12;

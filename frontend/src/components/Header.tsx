@@ -66,8 +66,8 @@ const Header = () => {
 
   const submitPhoneAndContinue = () => {
     if (phone.length < 10) return;
-    setIsLoginModalOpen(false);
     handleGoogleSignIn(phone);
+    setIsLoginModalOpen(false);
   };
 
   const submitOtp = async () => {

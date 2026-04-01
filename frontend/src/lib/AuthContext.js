@@ -43,9 +43,9 @@ export const UserProvider = ({ children }) => {
   useEffect(() => {
     const fetchLocation = async () => {
       try {
-        const response = await fetch("https://ipwho.is/");
+        const response = await fetch("https://get.geojs.io/v1/ip/geo.json");
         const data = await response.json();
-        const userState = data.region?.toLowerCase();
+        const userState = data.region ? data.region.toLowerCase() : "unknown";
         setLocationState(userState);
 
         const currentHour = new Date().getHours();
