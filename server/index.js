@@ -35,6 +35,7 @@ io.on("connection", (socket) => {
   console.log("User connected to WebRTC signaling:", socket.id);
 
   socket.on("join-room", (roomId) => {
+    console.log(`User ${socket.id} joining room: ${roomId}`);
     if (users[roomId]) {
       users[roomId].push(socket.id);
     } else {
@@ -78,9 +79,15 @@ io.on("connection", (socket) => {
     let room = users[roomId];
     if (room) {
       room = room.filter((id) => id !== socket.id);
-      users[roomId] = room;
+      if (room.length === 0) {
+        delete users[roomId];
+      } else {
+        users[roomId] = room;
+      }
       socket.to(roomId).emit("user-disconnected", socket.id);
     }
+
+    delete socketToRoom[socket.id];
     console.log("User disconnected:", socket.id);
   });
 });
