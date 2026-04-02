@@ -69,9 +69,12 @@ export default function VideoCall({ roomId }: VideoCallProps) {
         setStream(currentStream);
         if (myVideo.current) myVideo.current.srcObject = currentStream;
 
-        socketRef.current.emit("join-room", roomId);
-
         socketRef.current.on("all-users", (usersInRoom: string[]) => {
+          console.log(
+            "Received all-users event. Users in room:",
+            usersInRoom,
+          );
+
           const peersList: { peerID: string; peer: Peer.Instance }[] = [];
           usersInRoom.forEach((userID) => {
             const mySocketId = socketRef.current?.id || "";
@@ -88,6 +91,7 @@ export default function VideoCall({ roomId }: VideoCallProps) {
         });
 
         socketRef.current.on("user-joined", (payload) => {
+          console.log("A new user joined! Caller ID:", payload.callerID);
           const peer = addPeer(
             payload.signal,
             payload.callerID,
@@ -99,17 +103,35 @@ export default function VideoCall({ roomId }: VideoCallProps) {
         });
 
         socketRef.current.on("receiving-returned-signal", (payload) => {
+          console.log("Receiving returned signal from:", payload.id);
           const item = peersRef.current.find((p) => p.peerID === payload.id);
           if (item) item.peer.signal(payload.signal);
         });
 
         socketRef.current.on("user-disconnected", (id) => {
+          console.log("User disconnected:", id);
           const peerObj = peersRef.current.find((p) => p.peerID === id);
           if (peerObj) peerObj.peer.destroy();
           const peersList = peersRef.current.filter((p) => p.peerID !== id);
           peersRef.current = peersList;
           setPeers(peersList);
         });
+
+        socketRef.current.on("connect", () => {
+          console.log(
+            "Socket fully connected! My ID:",
+            socketRef.current?.id,
+          );
+          socketRef.current?.emit("join-room", roomId);
+        });
+
+        if (socketRef.current.connected) {
+          console.log(
+            "Socket already connected! My ID:",
+            socketRef.current?.id,
+          );
+          socketRef.current.emit("join-room", roomId);
+        }
       } catch (error) {
         console.error("Initialization Failed:", error);
         alert(

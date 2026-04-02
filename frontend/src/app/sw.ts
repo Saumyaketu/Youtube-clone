@@ -1,7 +1,7 @@
 /// <reference lib="webworker" />
 import { defaultCache } from "@serwist/next/worker";
 import type { PrecacheEntry, SerwistGlobalConfig } from "serwist";
-import { NetworkOnly, Serwist } from "serwist";
+import { NetworkFirst, Serwist } from "serwist";
 
 declare global {
   interface WorkerGlobalScope extends SerwistGlobalConfig {
@@ -21,7 +21,7 @@ const serwist = new Serwist({
       matcher: ({ url }) =>
         url.pathname.includes("/video-call") ||
         url.pathname.includes("/room"),
-      handler: new NetworkOnly(),
+      handler: new NetworkFirst(),
     },
     ...defaultCache,
   ],
