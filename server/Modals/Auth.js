@@ -17,6 +17,8 @@ const userSchema = mongoose.Schema(
     },
     downloadsToday: { type: Number, default: 0 },
     lastDownloadDate: { type: Date, default: null },
+    watchTimeToday: { type: Number, default: 0 },
+    lastWatchDate: { type: Date, default: null },
   },
   {
     timestamps: true,

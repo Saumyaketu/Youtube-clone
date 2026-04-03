@@ -9,11 +9,28 @@ interface PremiumModalProps {
   onClose: () => void;
 }
 
+const PLAN_LIMITS: Record<string, string> = {
+  Free: "5 minutes",
+  Bronze: "7 minutes",
+  Silver: "10 minutes",
+  Gold: "Unlimited",
+};
+
+const PLAN_WEIGHTS: Record<string, number> = {
+  Free: 0,
+  Bronze: 1,
+  Silver: 2,
+  Gold: 3,
+};
+
 const PremiumModal = ({ isOpen, onClose }: PremiumModalProps) => {
   const { user, login } = useUser();
   const [loading, setLoading] = useState(false);
 
   if (!isOpen) return null;
+
+  const currentPlan = user?.plan || "Free";
+  const currentWeight = PLAN_WEIGHTS[currentPlan];
 
   const handlePayment = async (plan: string) => {
     setLoading(true);
@@ -97,19 +114,28 @@ const PremiumModal = ({ isOpen, onClose }: PremiumModalProps) => {
           <X className="w-5 h-5" />
         </button>
 
-        <h2 className="text-2xl font-bold mb-4 dark:text-white">Upgrade to Keep Watching</h2>
-        <p className="text-gray-600 mb-6 dark:text-gray-300">
-          You've reached your watch limit. Upgrade to unlock more time and
-          unlimited downloads!
+        <h2 className="text-2xl font-bold mb-4 dark:text-white">
+          Upgrade to Keep Watching
+        </h2>
+        <p className="text-gray-600 mb-6 dark:text-gray-300 text-lg">
+          You've reached your{" "}
+          <strong className="text-black dark:text-white">{currentPlan}</strong>{" "}
+          plan watch limit of{" "}
+          <strong className="text-red-600 dark:text-red-400">
+            {PLAN_LIMITS[currentPlan]}
+          </strong>
+          . Upgrade to a higher tier below to unlock more time!
         </p>
 
         <div className="grid md:grid-cols-3 gap-6">
           {/* Bronze Plan */}
-          <div className="border rounded-lg p-5 bg-orange-50 flex flex-col dark:bg-orange-900">
-            <h3 className="font-semibold text-xl text-orange-800 border-b pb-2 mb-4">
+          <div
+            className={`border rounded-lg p-5 flex flex-col ${currentWeight >= PLAN_WEIGHTS["Bronze"] ? "bg-gray-50 dark:bg-gray-800 opacity-60" : "bg-orange-50 dark:bg-orange-900"}`}
+          >
+            <h3 className="font-semibold text-xl text-orange-800 border-b pb-2 mb-4 dark:text-orange-400">
               Bronze
             </h3>
-            <ul className="space-y-3 text-sm text-gray-700 grow">
+            <ul className="space-y-3 text-sm text-gray-700 grow dark:text-gray-300">
               <li className="flex items-center gap-2">
                 <Check className="w-4 h-4 text-green-600" /> 7 mins watch limit
               </li>
@@ -119,21 +145,36 @@ const PremiumModal = ({ isOpen, onClose }: PremiumModalProps) => {
               </li>
             </ul>
             <div className="text-3xl font-bold my-4">₹10</div>
-            <Button
-              disabled={loading}
-              onClick={() => handlePayment("Bronze")}
-              className="w-full mt-auto bg-orange-600 hover:bg-orange-700"
-            >
-              Select Bronze
-            </Button>
+            {currentWeight >= PLAN_WEIGHTS["Bronze"] ? (
+              <Button
+                disabled
+                className="w-full mt-auto bg-gray-300 text-gray-600 dark:bg-gray-700 dark:text-gray-400 cursor-not-allowed"
+              >
+                {currentWeight === PLAN_WEIGHTS["Bronze"]
+                  ? "Current Plan"
+                  : "Included in Current"}
+              </Button>
+            ) : (
+              <Button
+                disabled={loading}
+                onClick={() => handlePayment("Bronze")}
+                className="w-full mt-auto bg-orange-600 hover:bg-orange-700 text-white"
+              >
+                Upgrade to Bronze
+              </Button>
+            )}
           </div>
 
           {/* Silver Plan */}
-          <div className="border rounded-lg p-5 bg-gray-100 flex flex-col relative md:transform md:scale-105 shadow-lg dark:bg-gray-800 dark:border-gray-700">
-            <div className="absolute top-0 right-0 bg-blue-600 text-white text-xs px-2 py-1 rounded-bl-lg rounded-tr-lg">
-              Popular
-            </div>
-            <h3 className="font-semibold text-xl text-gray-800 border-b pb-2 mb-4">
+          <div
+            className={`border rounded-lg p-5 flex flex-col relative md:transform md:scale-105 shadow-lg ${currentWeight >= PLAN_WEIGHTS["Silver"] ? "bg-gray-50 dark:bg-gray-800 opacity-60" : "bg-gray-100 dark:bg-gray-800 dark:border-gray-700"}`}
+          >
+            {currentWeight < PLAN_WEIGHTS["Silver"] && (
+              <div className="absolute top-0 right-0 bg-blue-600 text-white text-xs px-2 py-1 rounded-bl-lg rounded-tr-lg">
+                Popular
+              </div>
+            )}
+            <h3 className="font-semibold text-xl text-gray-800 border-b pb-2 mb-4 dark:text-white">
               Silver
             </h3>
             <ul className="space-y-3 text-sm text-gray-700 dark:text-gray-300 grow">
@@ -149,18 +190,31 @@ const PremiumModal = ({ isOpen, onClose }: PremiumModalProps) => {
               </li>
             </ul>
             <div className="text-3xl font-bold my-4">₹50</div>
-            <Button
-              disabled={loading}
-              onClick={() => handlePayment("Silver")}
-              className="w-full mt-auto bg-gray-600 hover:bg-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600"
-            >
-              Select Silver
-            </Button>
+            {currentWeight >= PLAN_WEIGHTS["Silver"] ? (
+              <Button
+                disabled
+                className="w-full mt-auto bg-gray-300 text-gray-600 dark:bg-gray-700 dark:text-gray-400 cursor-not-allowed"
+              >
+                {currentWeight === PLAN_WEIGHTS["Silver"]
+                  ? "Current Plan"
+                  : "Included in Current"}
+              </Button>
+            ) : (
+              <Button
+                disabled={loading}
+                onClick={() => handlePayment("Silver")}
+                className="w-full mt-auto bg-gray-600 hover:bg-gray-700 text-white dark:bg-gray-600 dark:hover:bg-gray-500"
+              >
+                Upgrade to Silver
+              </Button>
+            )}
           </div>
 
           {/* Gold Plan */}
-          <div className="border rounded-lg p-5 bg-yellow-50 flex flex-col dark:bg-yellow-900">
-            <h3 className="font-semibold text-xl text-yellow-800 border-b pb-2 mb-4">
+          <div
+            className={`border rounded-lg p-5 flex flex-col ${currentWeight >= PLAN_WEIGHTS["Gold"] ? "bg-gray-50 dark:bg-gray-800 opacity-60" : "bg-yellow-50 dark:bg-yellow-900"}`}
+          >
+            <h3 className="font-semibold text-xl text-yellow-800 border-b pb-2 mb-4 dark:text-yellow-400">
               Gold
             </h3>
             <ul className="space-y-3 text-sm text-gray-700 dark:text-gray-300 grow">
@@ -177,13 +231,22 @@ const PremiumModal = ({ isOpen, onClose }: PremiumModalProps) => {
               </li>
             </ul>
             <div className="text-3xl font-bold my-4">₹100</div>
-            <Button
-              disabled={loading}
-              onClick={() => handlePayment("Gold")}
-              className="w-full mt-auto bg-yellow-500 hover:bg-yellow-600 text-black"
-            >
-              Select Gold
-            </Button>
+            {currentWeight >= PLAN_WEIGHTS["Gold"] ? (
+              <Button
+                disabled
+                className="w-full mt-auto bg-gray-300 text-gray-600 dark:bg-gray-700 dark:text-gray-400 cursor-not-allowed"
+              >
+                Current Plan
+              </Button>
+            ) : (
+              <Button
+                disabled={loading}
+                onClick={() => handlePayment("Gold")}
+                className="w-full mt-auto bg-yellow-500 hover:bg-yellow-600 text-black"
+              >
+                Upgrade to Gold
+              </Button>
+            )}
           </div>
         </div>
       </div>

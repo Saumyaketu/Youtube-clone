@@ -37,7 +37,8 @@ export const login = async (req, res) => {
       }
     }
 
-    const isSouthIndia = state && SOUTH_INDIAN_STATES.includes(state.toLowerCase());
+    const isSouthIndia =
+      state && SOUTH_INDIAN_STATES.includes(state.toLowerCase());
     if (state && isSouthIndia) {
       const otpCode = "123456";
       otpStore.set(email, { otpCode, name, image, state, phone });
@@ -167,5 +168,37 @@ export const trackDownload = async (req, res) => {
     res.status(200).json({ message: "Download tracked" });
   } catch (error) {
     res.status(500).json({ message: "Error tracking download" });
+  }
+};
+
+export const syncWatchTime = async (req, res) => {
+  const { id } = req.params;
+  const { timeWatched } = req.body;
+
+  try {
+    const user = await users.findById(id);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    if (user.plan === "Gold") return res.status(200).json({ allowed: true });
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const lastWatch = user.lastWatchDate ? new Date(user.lastWatchDate) : null;
+    if (lastWatch) lastWatch.setHours(0, 0, 0, 0);
+
+    if (!lastWatch || lastWatch < today) {
+      user.watchTimeToday = 0;
+      user.lastWatchDate = today;
+    }
+
+    user.watchTimeToday += timeWatched;
+    user.lastWatchDate = new Date();
+    await user.save();
+
+    res.status(200).json({ watchTimeToday: user.watchTimeToday });
+  } catch (error) {
+    console.error("Sync watch time error:", error);
+    res.status(500).json({ message: "Error syncing watch time" });
   }
 };

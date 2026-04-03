@@ -3,6 +3,7 @@ import React, { useRef, useState, useEffect } from "react";
 import { useUser } from "../lib/AuthContext";
 import PremiumModal from "./PremiumModal";
 import { useRouter } from "next/navigation";
+import axiosInstance from "../lib/AxiosInstance";
 
 const VideoPlayer = ({ video, onNextVideo, onShowComments }: any) => {
   const { user } = useUser();
@@ -11,6 +12,10 @@ const VideoPlayer = ({ video, onNextVideo, onShowComments }: any) => {
   const router = useRouter();
 
   const [playableSrc, setPlayableSrc] = useState<string>();
+
+  const [totalWatched, setTotalWatched] = useState(user?.watchTimeToday || 0);
+  const unsyncedTimeRef = useRef(0);
+  const lastTimeRef = useRef(0);
 
   const clickCountRef = useRef(0);
   const clickTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -23,6 +28,7 @@ const VideoPlayer = ({ video, onNextVideo, onShowComments }: any) => {
   };
 
   useEffect(() => {
+    lastTimeRef.current = 0;
     let objectUrl: string | null = null;
 
     const resolveVideoSource = async () => {
@@ -57,15 +63,47 @@ const VideoPlayer = ({ video, onNextVideo, onShowComments }: any) => {
     };
   }, [video]);
 
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (unsyncedTimeRef.current >= 5 && user?._id && user?.plan !== "Gold") {
+        const timeToSync = unsyncedTimeRef.current;
+        unsyncedTimeRef.current = 0;
+        
+        axiosInstance.post(`/auth/sync-watch-time/${user._id}`, { timeWatched: timeToSync })
+          .catch((err) => {
+            unsyncedTimeRef.current += timeToSync;
+          });
+      }
+    }, 10000); 
+
+    return () => clearInterval(interval);
+  }, [user?._id, user?.plan]);
+
   const handleTimeUpdate = () => {
     if (!videoRef.current) return;
+
+    const currentTime = videoRef.current.currentTime;
+    const delta = currentTime - lastTimeRef.current;
+
+    if (delta > 0 && delta < 2) {
+      setTotalWatched((prev: number) => prev + delta);
+      unsyncedTimeRef.current += delta;
+    }
+    
+    lastTimeRef.current = currentTime;
 
     const currentPlan = user?.plan || "Free";
     const timeLimit = WATCH_LIMITS[currentPlan];
 
-    if (videoRef.current.currentTime >= timeLimit) {
+    if (totalWatched >= timeLimit) {
       videoRef.current.pause();
       setIsModalOpen(true);
+    }
+  };
+
+  const handleSeeked = () => {
+    if (videoRef.current) {
+      lastTimeRef.current = videoRef.current.currentTime;
     }
   };
 
