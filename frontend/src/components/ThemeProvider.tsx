@@ -1,6 +1,16 @@
 "use client";
-import React, { useEffect, useState } from "react";
-import { ThemeProvider as NextThemeProvider } from "next-themes";
+import React, { createContext, useContext, useEffect, useState } from "react";
+import { ThemeProvider as NextThemeProvider, useTheme } from "next-themes";
+import { getUserLocation } from "../lib/location";
+
+type ThemeMode = "auto" | "light" | "dark";
+
+interface CustomThemeContextType {
+  mode: ThemeMode;
+  setMode: (mode: ThemeMode) => void;
+}
+
+const CustomThemeContext = createContext<CustomThemeContextType | undefined>(undefined);
 
 const SOUTH_INDIAN_STATES = [
   "tamil nadu",
@@ -10,38 +20,71 @@ const SOUTH_INDIAN_STATES = [
   "telangana",
 ];
 
-export default function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [initialTheme, setInitialTheme] = useState<string | null>(null);
+function ThemeLogic({ mode }: { mode: ThemeMode }) {
+  const { setTheme } = useTheme();
 
   useEffect(() => {
     let cancelled = false;
-    const detect = async () => {
-      try {
-        const res = await fetch("https://get.geojs.io/v1/ip/geo.json");
-        const data = await res.json();
-        const userState = data.region ? data.region.toLowerCase() : "unknown";
-
-        const currentHour = new Date().getHours();
-        const isTimeBetween10And12 = currentHour >= 10 && currentHour < 12;
-        const isSouthIndia = userState && SOUTH_INDIAN_STATES.includes(userState);
-
-        const shouldBeLight = isSouthIndia && isTimeBetween10And12;
-        if (!cancelled) setInitialTheme(shouldBeLight ? "light" : "dark");
-      } catch (e) {
-        if (!cancelled) setInitialTheme("dark");
+    const applyTheme = async () => {
+      if (mode === "light") {
+        setTheme("light");
+        return;
       }
+      if (mode === "dark") {
+        setTheme("dark");
+        return;
+      }
+
+      const { state } = await getUserLocation();
+      if (cancelled) return;
+
+      const currentHour = new Date().getHours();
+      const isTimeBetween10And12 = currentHour >= 10 && currentHour < 12;
+      const isSouthIndia = state && SOUTH_INDIAN_STATES.includes(state);
+
+      const shouldBeLight = isSouthIndia && isTimeBetween10And12;
+      setTheme(shouldBeLight ? "light" : "dark");
     };
-    detect();
+
+    applyTheme();
+
     return () => {
       cancelled = true;
     };
+  }, [mode, setTheme]);
+
+  return null;
+}
+
+export default function ThemeProvider({ children }: { children: React.ReactNode }) {
+  const [mode, setModeState] = useState<ThemeMode>("auto");
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    const stored = localStorage.getItem("youtube-theme-preference") as ThemeMode;
+    if (stored === "light" || stored === "dark" || stored === "auto") {
+      setModeState(stored);
+    }
   }, []);
 
-  const themeFallback = initialTheme ?? "dark";
+  const setMode = (newMode: ThemeMode) => {
+    setModeState(newMode);
+    localStorage.setItem("youtube-theme-preference", newMode);
+  };
 
   return (
-    <NextThemeProvider attribute="class" defaultTheme={themeFallback} enableSystem={false}>
-      {children}
-    </NextThemeProvider>
+    <CustomThemeContext.Provider value={{ mode, setMode }}>
+      <NextThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
+        {mounted && <ThemeLogic mode={mode} />}
+        {children}
+      </NextThemeProvider>
+    </CustomThemeContext.Provider>
   );
 }
+
+export const useCustomTheme = () => {
+  const context = useContext(CustomThemeContext);
+  if (!context) throw new Error("useCustomTheme must be used within ThemeProvider");
+  return context;
+};

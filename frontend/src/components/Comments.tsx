@@ -6,6 +6,7 @@ import { Button } from "./ui/button";
 import { formatDistanceToNow } from "date-fns";
 import { useUser } from "../lib/AuthContext";
 import axiosInstance from "../lib/AxiosInstance";
+import { getUserLocation } from "../lib/location";
 import {
   MapPin,
   Globe,
@@ -162,34 +163,12 @@ const Comments = ({ videoId }: any) => {
 
   useEffect(() => {
     loadComments();
-    getUserLocation();
+    const initLocation = async () => {
+      const { city } = await getUserLocation();
+      setUserCity(city);
+    };
+    initLocation();
   }, [videoId]);
-
-  const getUserLocation = () => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        async (position) => {
-          try {
-            const { latitude, longitude } = position.coords;
-            const res = await fetch(
-              `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`,
-            );
-            const data = await res.json();
-            if (data.city) {
-              setUserCity(data.city);
-            } else if (data.locality) {
-              setUserCity(data.locality);
-            }
-          } catch (error) {
-            console.error("Error fetching location:", error);
-          }
-        },
-        (error) => {
-          console.error("Geolocation error:", error);
-        },
-      );
-    }
-  };
 
   const loadComments = async () => {
     try {

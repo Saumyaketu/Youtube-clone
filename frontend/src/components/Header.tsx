@@ -1,5 +1,5 @@
 "use client";
-import { Bell, Menu, Mic, Search, User, VideoIcon } from "lucide-react";
+import { Bell, Menu, Mic, Search, User, VideoIcon, Sun, Moon, Monitor } from "lucide-react";
 import React, { FormEvent, useState } from "react";
 import { Button } from "./ui/button";
 import Link from "next/link";
@@ -17,6 +17,7 @@ import { useRouter } from "next/navigation";
 import { useUser } from "../lib/AuthContext";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
 import { Label } from "./ui/label";
+import { useCustomTheme } from "./ThemeProvider";
 
 const SOUTH_INDIAN_STATES = [
   "tamil nadu",
@@ -37,6 +38,7 @@ const Header = () => {
     verifyOtpAndLogin,
     isDarkMode,
   } = useUser();
+  const { mode, setMode } = useCustomTheme();
   const [searchQuery, setSearchQuery] = useState("");
   const [isDialogueOpen, setisDialogueOpen] = useState(false);
   const router = useRouter();
@@ -171,6 +173,32 @@ const Header = () => {
           >
             <Search className="w-5 h-5" />
           </Button>
+
+          <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" className="mr-1">
+              {mode === "light" ? (
+                <Sun className="h-5 w-5 text-yellow-500" />
+              ) : mode === "dark" ? (
+                <Moon className="h-5 w-5 text-blue-400" />
+              ) : (
+                <Monitor className="h-5 w-5 text-gray-500 dark:text-gray-400" />
+              )}
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={() => setMode("light")} className="cursor-pointer">
+              <Sun className="h-4 w-4 mr-2 text-yellow-500" /> Light
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setMode("dark")} className="cursor-pointer">
+              <Moon className="h-4 w-4 mr-2 text-blue-400" /> Dark
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => setMode("auto")} className="cursor-pointer">
+              <Monitor className="h-4 w-4 mr-2" /> Default (Auto)
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
 
           {user ? (
             <>

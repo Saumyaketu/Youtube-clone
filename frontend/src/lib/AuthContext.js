@@ -9,6 +9,7 @@ import {
 } from "firebase/auth";
 import { provider, auth } from "./firebase";
 import axiosInstance from "./AxiosInstance";
+import { getUserLocation } from "./location";
 
 const UserContext = createContext();
 
@@ -42,21 +43,13 @@ export const UserProvider = ({ children }) => {
 
   useEffect(() => {
     const fetchLocation = async () => {
-      try {
-        const response = await fetch("https://get.geojs.io/v1/ip/geo.json");
-        const data = await response.json();
-        const userState = data.region ? data.region.toLowerCase() : "unknown";
-        setLocationState(userState);
+      const { state } = await getUserLocation();
+      setLocationState(state);
 
-        const currentHour = new Date().getHours();
-        const isTimeBetween10And12 = currentHour >= 10 && currentHour < 12;
-        const isSouthIndia = userState && SOUTH_INDIAN_STATES.includes(userState);
-        setIsDarkMode(!(isSouthIndia && isTimeBetween10And12));
-      } catch (error) {
-        console.error("Location fetch failed", error);
-        setLocationState("unknown");
-        setIsDarkMode(true);
-      }
+      const currentHour = new Date().getHours();
+      const isTimeBetween10And12 = currentHour >= 10 && currentHour < 12;
+      const isSouthIndia = state && SOUTH_INDIAN_STATES.includes(state);
+      setIsDarkMode(!(isSouthIndia && isTimeBetween10And12));
     };
     fetchLocation();
   }, []);
