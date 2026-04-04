@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import axiosInstance from "@/src/lib/AxiosInstance";
+// import axiosInstance from "@/src/lib/AxiosInstance";
 import io, { Socket } from "socket.io-client";
 import Peer from "simple-peer";
 
@@ -26,7 +26,7 @@ const Video = ({ peer }: { peer: Peer.Instance }) => {
       playsInline
       autoPlay
       ref={ref}
-      className="w-full bg-gray-800 rounded-lg aspect-video object-cover shadow-lg border border-gray-700"
+      className="w-full bg-gray-200 dark:bg-gray-800 rounded-lg aspect-video object-cover shadow-lg border border-gray-300 dark:border-gray-700 transition-colors"
     />
   );
 };
@@ -49,11 +49,11 @@ export default function VideoCall({ roomId }: VideoCallProps) {
   useEffect(() => {
     const initializeCall = async () => {
       try {
-        const turnRes = await axiosInstance.get("/turn");
+        // const turnRes = await axiosInstance.get("/turn");
         const secureIceServers = [
           { urls: "stun:stun.l.google.com:19302" },
           { urls: "stun:stun1.l.google.com:19302" },
-          ...turnRes.data,
+          // ...turnRes.data,
         ];
 
         const SOCKET_URL = process.env.NEXT_PUBLIC_SOCKET_URL || "";
@@ -70,11 +70,6 @@ export default function VideoCall({ roomId }: VideoCallProps) {
         if (myVideo.current) myVideo.current.srcObject = currentStream;
 
         socketRef.current.on("all-users", (usersInRoom: string[]) => {
-          console.log(
-            "Received all-users event. Users in room:",
-            usersInRoom,
-          );
-
           const peersList: { peerID: string; peer: Peer.Instance }[] = [];
           usersInRoom.forEach((userID) => {
             const mySocketId = socketRef.current?.id || "";
@@ -91,7 +86,6 @@ export default function VideoCall({ roomId }: VideoCallProps) {
         });
 
         socketRef.current.on("user-joined", (payload) => {
-          console.log("A new user joined! Caller ID:", payload.callerID);
           const peer = addPeer(
             payload.signal,
             payload.callerID,
@@ -103,13 +97,11 @@ export default function VideoCall({ roomId }: VideoCallProps) {
         });
 
         socketRef.current.on("receiving-returned-signal", (payload) => {
-          console.log("Receiving returned signal from:", payload.id);
           const item = peersRef.current.find((p) => p.peerID === payload.id);
           if (item) item.peer.signal(payload.signal);
         });
 
         socketRef.current.on("user-disconnected", (id) => {
-          console.log("User disconnected:", id);
           const peerObj = peersRef.current.find((p) => p.peerID === id);
           if (peerObj) peerObj.peer.destroy();
           const peersList = peersRef.current.filter((p) => p.peerID !== id);
@@ -118,18 +110,10 @@ export default function VideoCall({ roomId }: VideoCallProps) {
         });
 
         socketRef.current.on("connect", () => {
-          console.log(
-            "Socket fully connected! My ID:",
-            socketRef.current?.id,
-          );
           socketRef.current?.emit("join-room", roomId);
         });
 
         if (socketRef.current.connected) {
-          console.log(
-            "Socket already connected! My ID:",
-            socketRef.current?.id,
-          );
           socketRef.current.emit("join-room", roomId);
         }
       } catch (error) {
@@ -271,7 +255,7 @@ export default function VideoCall({ roomId }: VideoCallProps) {
     <div className="flex flex-col gap-4 w-full">
       <div className="grid grid-cols-1 gap-3 w-full">
         <div className="relative">
-          <span className="text-white bg-black/60 absolute z-10 px-2 py-1 m-2 rounded text-xs shadow-md backdrop-blur-sm">
+          <span className="text-gray-900 bg-white/80 dark:text-white dark:bg-black/60 absolute z-10 px-2 py-1 m-2 rounded text-xs shadow-md backdrop-blur-sm">
             You {isScreenSharing && "(Sharing Screen)"}
           </span>
           <video
@@ -279,7 +263,7 @@ export default function VideoCall({ roomId }: VideoCallProps) {
             muted
             ref={myVideo}
             autoPlay
-            className="w-full bg-gray-800 rounded-lg aspect-video object-cover shadow-lg border border-gray-700"
+            className="w-full bg-gray-200 dark:bg-gray-800 rounded-lg aspect-video object-cover shadow-lg border border-gray-300 dark:border-gray-700 transition-colors"
           />
         </div>
 
@@ -288,7 +272,7 @@ export default function VideoCall({ roomId }: VideoCallProps) {
             key={peerObj.peerID}
             className="relative transition-all duration-300 animate-in fade-in zoom-in-95"
           >
-            <span className="text-white bg-black/60 absolute z-10 px-2 py-1 m-2 rounded text-xs shadow-md backdrop-blur-sm">
+            <span className="text-gray-900 bg-white/80 dark:text-white dark:bg-black/60 absolute z-10 px-2 py-1 m-2 rounded text-xs shadow-md backdrop-blur-sm">
               Participant
             </span>
             <Video peer={peerObj.peer} />
@@ -299,7 +283,7 @@ export default function VideoCall({ roomId }: VideoCallProps) {
       <div className="flex flex-col gap-2 mt-2">
         <button
           onClick={toggleScreenShare}
-          className="w-full py-2 text-sm font-semibold bg-gray-800 text-white rounded-md hover:bg-gray-700 border border-gray-600 transition"
+          className="w-full py-2 text-sm font-semibold bg-gray-200 text-gray-900 dark:bg-gray-800 dark:text-white rounded-md hover:bg-gray-300 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-600 transition"
         >
           {isScreenSharing ? "Stop Screen Share" : "Share Screen"}
         </button>

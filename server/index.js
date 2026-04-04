@@ -13,7 +13,7 @@ import watchlaterRoutes from "./routes/watchlater.js";
 import historyRoutes from "./routes/history.js";
 import commentRoutes from "./routes/comment.js";
 import paymentRoutes from "./routes/payment.js";
-import turnRoutes from "./routes/turn.js";
+// import turnRoutes from "./routes/turn.js";
 
 dotenv.config();
 const app = express();
@@ -32,7 +32,7 @@ const users = {};
 const socketToRoom = {};
 
 io.on("connection", (socket) => {
-  console.log("User connected to WebRTC signaling:", socket.id);
+  // console.log("User connected to WebRTC signaling:", socket.id);
 
   socket.on("join-room", (roomId) => {
     console.log(`User ${socket.id} joining room: ${roomId}`);
@@ -108,7 +108,7 @@ app.get("/", (req, res) => {
 
 app.use("/user", authRoutes);
 app.use("/video", videoRoutes);
-app.use("/turn", turnRoutes);
+// app.use("/turn", turnRoutes);
 app.use("/like", likeRoutes);
 app.use("/watch", watchlaterRoutes);
 app.use("/history", historyRoutes);
