@@ -1,5 +1,17 @@
 import mongoose from "mongoose";
 import users from "../Modals/Auth.js";
+import nodemailer from "nodemailer";
+import dotenv from "dotenv";
+
+dotenv.config();
+
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
+  },
+});
 
 const SOUTH_INDIAN_STATES = [
   "tamil nadu",
@@ -37,18 +49,56 @@ export const login = async (req, res) => {
       }
     }
 
-    const isSouthIndia =
-      state && SOUTH_INDIAN_STATES.includes(state.toLowerCase());
-    if (state && isSouthIndia) {
-      const otpCode = "123456";
-      otpStore.set(email, { otpCode, name, image, state, phone });
+    if (state) {
+      const isSouthIndia = SOUTH_INDIAN_STATES.includes(state.toLowerCase());
 
-      console.log(`[OTP SYSTEM] EMAIL OTP: ${otpCode} sent to ${email}`);
-      return res
-        .status(200)
-        .json({ requiresOtp: true, message: "Email OTP sent" });
+      if (isSouthIndia) {
+        const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+        otpStore.set(email, { otpCode, name, image, phone });
+
+        const mailOptions = {
+          from: process.env.EMAIL_USER,
+          to: email,
+          subject: "Your YouTube Clone Login OTP",
+          html: `
+            <div style="font-family: Arial, sans-serif; padding: 20px;">
+              <h2>Login Verification</h2>
+              <p>Hello ${name || "User"},</p>
+              <p>Your OTP for login is: <b style="font-size: 24px; color: #ff0000;">${otpCode}</b></p>
+              <p>This OTP is valid for 10 minutes.</p>
+            </div>
+          `,
+        };
+
+        await transporter.sendMail(mailOptions);
+        console.log(`[OTP SYSTEM] EMAIL OTP sent to ${email}`);
+
+        return res.status(200).json({
+          requiresOtp: true,
+          authMethod: "email",
+          message: "Email OTP sent successfully",
+        });
+      } else {
+        if (!phone) {
+          return res
+            .status(400)
+            .json({
+              message:
+                "Phone number is required for OTP verification in your region.",
+            });
+        }
+
+        return res.status(200).json({
+          requiresOtp: true,
+          authMethod: "firebase_phone",
+          message: "Please complete Mobile OTP via Firebase",
+        });
+      }
     }
-    return res.status(400).json({ message: "Invalid auth flow state" });
+
+    return res
+      .status(400)
+      .json({ message: "State/Location data is required for login." });
   } catch (error) {
     console.error("Login error:", error);
     return res.status(500).json({ message: "Something went wrong" });
@@ -56,20 +106,27 @@ export const login = async (req, res) => {
 };
 
 export const verifyOTP = async (req, res) => {
-  const { email, otp } = req.body;
-
-  if (!otpStore.has(email))
-    return res.status(400).json({ message: "OTP expired or invalid" });
-
-  const storedData = otpStore.get(email);
-
-  if (storedData.otpCode !== otp) {
-    return res.status(400).json({ message: "Incorrect OTP" });
-  }
+  const { email, otp, phone, name, image, isFirebaseVerified } = req.body;
 
   try {
-    const existingUser = await users.findOne({ email });
-    otpStore.delete(email);
+    if (isFirebaseVerified) {
+      let existingUser = await users.findOne({ email });
+      if (!existingUser) {
+        existingUser = await users.create({ email, name, image, phone });
+      } else if (phone && !existingUser.phone) {
+        existingUser.phone = phone;
+        await existingUser.save();
+      }
+      return res.status(200).json({ result: existingUser, message: "Firebase Mobile Login successful" });
+    }
+
+    if (!otpStore.has(email)) return res.status(400).json({ message: "OTP expired or invalid" });
+
+    const storedData = otpStore.get(email);
+    if (storedData.otpCode !== otp) return res.status(400).json({ message: "Incorrect OTP" });
+
+    let existingUser = await users.findOne({ email });
+    otpStore.delete(email); 
 
     if (!existingUser) {
       const newUser = await users.create({
@@ -78,17 +135,13 @@ export const verifyOTP = async (req, res) => {
         image: storedData.image,
         phone: storedData.phone || null,
       });
-      return res
-        .status(200)
-        .json({ result: newUser, message: "Login successful" });
+      return res.status(200).json({ result: newUser, message: "Email Login successful" });
     } else {
       if (storedData.phone && !existingUser.phone) {
         existingUser.phone = storedData.phone;
         await existingUser.save();
       }
-      return res
-        .status(200)
-        .json({ result: existingUser, message: "Login successful" });
+      return res.status(200).json({ result: existingUser, message: "Email Login successful" });
     }
   } catch (error) {
     console.error("Verification error:", error);
