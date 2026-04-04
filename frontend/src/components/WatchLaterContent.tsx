@@ -30,7 +30,7 @@ const WatchLaterContent = () => {
     if (user) {
       loadWatchLater();
     } else {
-      setLoading(true);
+      setLoading(false);
     }
   }, [user]);
 
@@ -61,34 +61,34 @@ const WatchLaterContent = () => {
     }
   };
 
-  if (loading) return <div>Loading...</div>;
+  if (loading) return <div className="p-4">Loading...</div>;
 
   if (!user) {
     return (
-      <div className="text-xl font-semibold mb-2 dark:text-white">
-        <Clock className="w-16 h-16 mx-auto text-gray-400 mb-4" />
-        <h2 className="text-xl font-semibold mb-2">Save videos for later</h2>
-        <p className="text-gray-600">
-          Sign in to access your Watch later playlist.
+      <div className="flex flex-col items-center justify-center min-h-[50vh] w-full mx-auto text-muted-foreground">
+        <Clock className="w-16 h-16 mb-4 opacity-30" />
+        <p className="text-lg font-medium text-foreground">
+          Save videos for later
         </p>
+        <p className="text-sm">Sign in to access your Watch later playlist.</p>
       </div>
     );
   }
 
   if (WatchLater.length === 0) {
     return (
-      <div className="text-xl font-semibold mb-2 dark:text-white">
-        <Clock className="w-16 h-16 mx-auto text-gray-400 mb-4" />
-        <h2 className="text-xl font-semibold mb-2">No video saved yet</h2>
-        <p className="text-gray-600">
-          Videos you save for later will appear here.
+      <div className="flex flex-col items-center justify-center min-h-[50vh] w-full mx-auto text-muted-foreground">
+        <Clock className="w-16 h-16 mb-4 opacity-30" />
+        <p className="text-lg font-medium text-foreground">
+          No video saved yet
         </p>
+        <p className="text-sm">Videos you save for later will appear here.</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 w-full">
       <div className="flex justify-between items-center">
         <p className="text-sm text-gray-600">{WatchLater.length} videos</p>
         {WatchLater.length > 0 && (

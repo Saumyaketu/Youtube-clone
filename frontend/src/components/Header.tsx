@@ -1,5 +1,16 @@
 "use client";
-import { Bell, Menu, Mic, Search, User, VideoIcon, Sun, Moon, Monitor } from "lucide-react";
+import {
+  Bell,
+  Menu,
+  Mic,
+  Search,
+  User,
+  VideoIcon,
+  Sun,
+  Moon,
+  Monitor,
+  SquarePlay,
+} from "lucide-react";
 import React, { FormEvent, useState } from "react";
 import { Button } from "./ui/button";
 import Link from "next/link";
@@ -63,11 +74,11 @@ const Header = () => {
     if (locationState && !isSouthIndia) {
       setIsLoginModalOpen(true);
     } else {
-      setIsProcessing(true); 
+      setIsProcessing(true);
       try {
         await handleGoogleSignIn();
       } finally {
-        setIsProcessing(false); 
+        setIsProcessing(false);
       }
     }
   };
@@ -116,17 +127,10 @@ const Header = () => {
             <Menu className="w-6 h-6" />
           </Button>
           <Link href="/" className="flex items-center gap-1">
-            <div className="bg-red-600 p-1 rounded">
-              <svg
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill={isDarkMode ? "white" : "black"}
-              >
-                <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
-              </svg>
+            <div className="bg-red-600 p-1 rounded text-white">
+              <SquarePlay className="w-6 h-6" />
             </div>
-            <span className="text-xl font-medium dark:text-white hidden sm:block">
+            <span className="text-xl font-medium dark:text-white">
               YouTube
             </span>
           </Link>
@@ -163,109 +167,121 @@ const Header = () => {
         </form>
 
         {/* Right Side Icons (Mobile + Desktop) */}
-        <div className="flex items-center gap-1 sm:gap-2">
+        <div className="flex items-center justify-end gap-2 sm:gap-4">
           {/* Mobile Search Icon */}
           <Button
             variant="ghost"
             size="icon"
-            className="md:hidden"
+            className="md:hidden rounded-full"
             onClick={() => router.push("/search")}
           >
             <Search className="w-5 h-5" />
           </Button>
 
           <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="mr-1">
-              {mode === "light" ? (
-                <Sun className="h-5 w-5 text-yellow-500" />
-              ) : mode === "dark" ? (
-                <Moon className="h-5 w-5 text-blue-400" />
-              ) : (
-                <Monitor className="h-5 w-5 text-gray-500 dark:text-gray-400" />
-              )}
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => setMode("light")} className="cursor-pointer">
-              <Sun className="h-4 w-4 mr-2 text-yellow-500" /> Light
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setMode("dark")} className="cursor-pointer">
-              <Moon className="h-4 w-4 mr-2 text-blue-400" /> Dark
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => setMode("auto")} className="cursor-pointer">
-              <Monitor className="h-4 w-4 mr-2" /> Default (Auto)
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="rounded-full">
+                {mode === "light" ? (
+                  <Sun className="h-5 w-5 text-yellow-500" />
+                ) : mode === "dark" ? (
+                  <Moon className="h-5 w-5 text-blue-400" />
+                ) : (
+                  <Monitor className="h-5 w-5 text-gray-500 dark:text-gray-400" />
+                )}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem
+                onClick={() => setMode("light")}
+                className="cursor-pointer"
+              >
+                <Sun className="h-4 w-4 mr-2 text-yellow-500" /> Light
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => setMode("dark")}
+                className="cursor-pointer"
+              >
+                <Moon className="h-4 w-4 mr-2 text-blue-400" /> Dark
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={() => setMode("auto")}
+                className="cursor-pointer"
+              >
+                <Monitor className="h-4 w-4 mr-2" /> Default (Auto)
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          <Button variant="ghost" size="icon" className="rounded-full" asChild>
+            <Link href="/video-call">
+              <VideoIcon className="w-5 h-5 sm:w-6 sm:h-6" />
+            </Link>
+          </Button>
 
           {user ? (
             <>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="hidden sm:inline-flex"
-              >
-                <VideoIcon className="w-6 h-6" />
-              </Button>
-              <Button variant="ghost" size="icon">
-                <Bell className="w-6 h-6" />
+              <Button variant="ghost" size="icon" className="rounded-full">
+                <Bell className="w-5 h-5 sm:w-6 sm:h-6" />
               </Button>
 
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    className="relative h-8 w-8 rounded-full"
-                  >
-                    <Avatar className="h-8 w-8">
-                      <AvatarImage
-                        src={user.image || undefined}
-                        alt={user.name || "User Avatar"}
-                      />
-                      <AvatarFallback>{user.name?.[0] || "U"}</AvatarFallback>
-                    </Avatar>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-56" align="end" forceMount>
-                  {user?.channelName ? (
+              <div className="hidden md:block">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      className="relative h-8 w-8 rounded-full"
+                    >
+                      <Avatar className="h-8 w-8">
+                        <AvatarImage
+                          src={user.image || undefined}
+                          alt={user.name || "User Avatar"}
+                        />
+                        <AvatarFallback>{user.name?.[0] || "U"}</AvatarFallback>
+                      </Avatar>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-56" align="end" forceMount>
+                    {user?.channelName ? (
+                      <DropdownMenuItem asChild>
+                        <Link href={`/channel/${user?._id}`}>Your Channel</Link>
+                      </DropdownMenuItem>
+                    ) : (
+                      <div className="px-2 py-1.5">
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          className="w-full"
+                          onClick={() => setisDialogueOpen(true)}
+                        >
+                          Create a channel
+                        </Button>
+                      </div>
+                    )}
                     <DropdownMenuItem asChild>
-                      <Link href={`/channel/${user?._id}`}>Your Channel</Link>
+                      <Link href="/history">History</Link>
                     </DropdownMenuItem>
-                  ) : (
-                    <div className="px-2 py-1.5">
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        className="w-full"
-                        onClick={() => setisDialogueOpen(true)}
-                      >
-                        Create a channel
-                      </Button>
-                    </div>
-                  )}
-                  <DropdownMenuItem asChild>
-                    <Link href="/history">History</Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/liked">Liked Videos</Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/watch-later">Watch Later</Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/downloads">Downloads</Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={logout}>Sign out</DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+                    <DropdownMenuItem asChild>
+                      <Link href="/liked">Liked Videos</Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href="/watch-later">Watch Later</Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href="/downloads">Downloads</Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={logout}>
+                      Sign out
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
             </>
           ) : (
             <>
               <Button
-                className="flex items-center gap-2 bg-gray-500 hover:bg-gray-600 dark:bg-gray-700 dark:hover:bg-gray-600"
+                className="flex items-center gap-2 bg-gray-500 hover:bg-gray-600 dark:bg-gray-700 dark:hover:bg-gray-600 px-2 sm:px-4"
                 onClick={onSignInClick}
                 disabled={locationState === null}
               >
@@ -292,9 +308,7 @@ const Header = () => {
                   <div className="flex flex-col gap-4 py-4">
                     <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 p-3 rounded-lg">
                       <p className="text-sm text-yellow-800 dark:text-yellow-200 leading-relaxed">
-                        <strong className="block mb-1">
-                          Free Tier Demo:
-                        </strong>
+                        <strong className="block mb-1">Free Tier Demo:</strong>
                         Please enter the test number{" "}
                         <b className="tracking-wide">+91 99999 99999</b>. Real
                         numbers will fail. The OTP to use on the next screen is{" "}
@@ -309,7 +323,9 @@ const Header = () => {
                         placeholder="9876543210"
                         value={phone}
                         onChange={(e) => {
-                          const numericValue = e.target.value.replace(/\D/g, '').slice(0, 10);
+                          const numericValue = e.target.value
+                            .replace(/\D/g, "")
+                            .slice(0, 10);
                           setPhone(numericValue);
                         }}
                         disabled={isProcessing}
@@ -355,28 +371,36 @@ const Header = () => {
                         placeholder="123456"
                         value={otpInput}
                         onChange={(e) => {
-                           const numericValue = e.target.value.replace(/\D/g, '').slice(0, 6);
-                           setOtpInput(numericValue);
+                          const numericValue = e.target.value
+                            .replace(/\D/g, "")
+                            .slice(0, 6);
+                          setOtpInput(numericValue);
                         }}
                       />
                       {otpError && (
                         <p className="text-xs text-red-500">{otpError}</p>
                       )}
                     </div>
-                    <Button onClick={submitOtp} disabled={otpInput.length !== 6}>Verify & Login</Button>
+                    <Button
+                      onClick={submitOtp}
+                      disabled={otpInput.length !== 6}
+                    >
+                      Verify & Login
+                    </Button>
                   </div>
                 </DialogContent>
               </Dialog>
             </>
           )}
         </div>
-        <ChannelDialogue
-          isopen={isDialogueOpen}
-          onclose={() => setisDialogueOpen(false)}
-          mode="create"
-        />
-        <div id="recaptcha-container"></div>
       </header>
+
+      <ChannelDialogue
+        isopen={isDialogueOpen}
+        onclose={() => setisDialogueOpen(false)}
+        mode="create"
+      />
+      <div id="recaptcha-container"></div>
     </>
   );
 };

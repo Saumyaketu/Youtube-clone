@@ -30,7 +30,7 @@ const HistoryContent = () => {
     if (user) {
       loadHistory();
     } else {
-      setLoading(true);
+      setLoading(false);
     }
   }, [user]);
 
@@ -49,7 +49,7 @@ const HistoryContent = () => {
     }
   };
 
-  if (loading) return <div>Loading...</div>;
+  if (loading) return <div className="p-4">Loading...</div>;
 
   const handleRemoveHistory = async (historyId: string) => {
     try {
@@ -64,32 +64,34 @@ const HistoryContent = () => {
 
   if (!user) {
     return (
-      <div className="text-center py-12">
-        <Clock className="w-16 h-16 mx-auto text-gray-400 dark:text-gray-300 mb-4" />
-        <h2 className="text-xl font-semibold mb-2 dark:text-white">
+      <div className="flex flex-col items-center justify-center min-h-[50vh] w-full mx-auto text-muted-foreground">
+        <Clock className="w-16 h-16 mb-4 opacity-30" />
+        <p className="text-lg font-medium text-foreground">
           Keep track of what you watch
-        </h2>
-        <p className="text-gray-600 dark:text-gray-300">
-          Watch history isn't viewable when signed out.
         </p>
+        <p className="text-sm">Watch history isn't viewable when signed out.</p>
       </div>
     );
   }
 
   if (history.length === 0) {
     return (
-      <div className="text-center py-12">
-        <Clock className="w-16 h-16 mx-auto text-gray-400 dark:text-gray-300 mb-4" />
-        <h2 className="text-xl font-semibold mb-2 dark:text-white">No watch history yet</h2>
-        <p className="text-gray-600 dark:text-gray-300">Videos you watch will appear here</p>
+      <div className="flex flex-col items-center justify-center min-h-[50vh] w-full mx-auto text-muted-foreground">
+        <Clock className="w-16 h-16 mb-4 opacity-30" />
+        <p className="text-lg font-medium text-foreground">
+          No watch history yet
+        </p>
+        <p className="text-sm">Videos you watch will appear here.</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 w-full">
       <div className="flex justify-between items-center">
-        <p className="text-sm text-gray-600 dark:text-gray-300">{history.length} videos</p>
+        <p className="text-sm text-gray-600 dark:text-gray-300">
+          {history.length} videos
+        </p>
       </div>
 
       <div className="space-y-4">
@@ -120,13 +122,13 @@ const HistoryContent = () => {
                     {item.videoid.videotitle}
                   </h3>
                 </Link>
-                  <p className="text-sm text-gray-600 dark:text-gray-300">
-                    {item.videoid.videochannel}
-                  </p>
-                  <p className="text-sm text-gray-600 dark:text-gray-300">
-                    {item.videoid.views?.toLocaleString() || 0} views •{" "}
-                    {formatDistanceToNow(new Date(item.createdAt))} ago
-                  </p>
+                <p className="text-sm text-gray-600 dark:text-gray-300">
+                  {item.videoid.videochannel}
+                </p>
+                <p className="text-sm text-gray-600 dark:text-gray-300">
+                  {item.videoid.views?.toLocaleString() || 0} views •{" "}
+                  {formatDistanceToNow(new Date(item.createdAt))} ago
+                </p>
               </div>
 
               <DropdownMenu>
@@ -139,7 +141,10 @@ const HistoryContent = () => {
                     <MoreVertical className="w-4 h-4" />
                   </Button>
                 </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="dark:bg-gray-800 dark:text-gray-100">
+                <DropdownMenuContent
+                  align="end"
+                  className="dark:bg-gray-800 dark:text-gray-100"
+                >
                   <DropdownMenuItem
                     onClick={() => handleRemoveHistory(item._id)}
                   >

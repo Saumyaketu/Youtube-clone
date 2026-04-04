@@ -9,16 +9,22 @@ import {
   User,
   PlusCircle,
   Video,
+  X,
+  Download,
 } from "lucide-react";
 import Link from "next/link";
 import { Button } from "./ui/button";
 import { useState } from "react";
 import ChannelDialogue from "./ChannelDialogue";
 import { useUser } from "../lib/AuthContext";
+import { useRouter } from "next/navigation";
+import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 
 const Sidebar = () => {
-  const { user } = useUser();
+  const { user, logout } = useUser();
   const [isDialogueOpen, setisDialogueOpen] = useState(false);
+  const [isYouTabOpen, setIsYouTabOpen] = useState(false);
+  const router = useRouter();
 
   return (
     <>
@@ -149,8 +155,14 @@ const Sidebar = () => {
           <span className="text-[10px]">Subs</span>
         </Link>
 
-        <Link
-          href={user ? "/history" : "/"}
+        <button
+          onClick={() => {
+            if (user) {
+              setIsYouTabOpen(true);
+            } else {
+              router.push("/history");
+            }
+          }}
           className="flex flex-col items-center gap-1 text-muted-foreground hover:text-foreground"
         >
           {user ? (
@@ -159,8 +171,97 @@ const Sidebar = () => {
             <History className="w-6 h-6" />
           )}
           <span className="text-[10px]">{user ? "You" : "History"}</span>
-        </Link>
+        </button>
       </nav>
+
+      {user && isYouTabOpen && (
+        <div className="fixed inset-0 bg-background z-100 flex flex-col md:hidden animate-in slide-in-from-right-2 duration-200 overflow-hidden">
+          <div className="flex items-center p-4 border-b border-border sticky top-0 bg-background z-10 shrink-0 gap-4">
+            <button
+              onClick={() => setIsYouTabOpen(false)}
+              className="p-1 rounded-full hover:bg-secondary"
+            >
+              <X className="w-6 h-6" />
+            </button>
+            <span className="text-xl font-bold">You</span>
+          </div>
+
+          <div className="flex-1 overflow-y-auto pb-20 p-4">
+            <div className="flex items-center gap-4 mb-6">
+              <Avatar className="w-16 h-16">
+                <AvatarImage src={user.image || undefined} />
+                <AvatarFallback>{user.name?.[0] || "U"}</AvatarFallback>
+              </Avatar>
+              <div className="flex flex-col">
+                <h2 className="text-xl font-bold">{user.name}</h2>
+                <span className="text-sm text-muted-foreground mb-1">
+                  @
+                  {user.channelName ||
+                    user.name?.toLowerCase().replace(/\s/g, "")}
+                </span>
+                <button
+                  onClick={() => {
+                    setIsYouTabOpen(false);
+                    if (user.channelName) router.push(`/channel/${user._id}`);
+                    else setisDialogueOpen(true);
+                  }}
+                  className="text-sm text-blue-500 font-medium text-left"
+                >
+                  {user.channelName ? "View Channel" : "Create Channel"}
+                </button>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-1">
+              <Link href="/history" onClick={() => setIsYouTabOpen(false)}>
+                <Button
+                  variant="ghost"
+                  className="w-full justify-start h-12 text-base px-2"
+                >
+                  <History className="w-6 h-6 mr-4" /> History
+                </Button>
+              </Link>
+              <Link href="/liked" onClick={() => setIsYouTabOpen(false)}>
+                <Button
+                  variant="ghost"
+                  className="w-full justify-start h-12 text-base px-2"
+                >
+                  <ThumbsUp className="w-6 h-6 mr-4" /> Liked Videos
+                </Button>
+              </Link>
+              <Link href="/watch-later" onClick={() => setIsYouTabOpen(false)}>
+                <Button
+                  variant="ghost"
+                  className="w-full justify-start h-12 text-base px-2"
+                >
+                  <Clock className="w-6 h-6 mr-4" /> Watch Later
+                </Button>
+              </Link>
+              <Link href="/downloads" onClick={() => setIsYouTabOpen(false)}>
+                <Button
+                  variant="ghost"
+                  className="w-full justify-start h-12 text-base px-2"
+                >
+                  <Download className="w-6 h-6 mr-4" /> Downloads
+                </Button>
+              </Link>
+            </div>
+
+            <div className="h-px bg-border my-4 w-full" />
+
+            <Button
+              variant="ghost"
+              className="w-full justify-start h-12 text-base px-2 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+              onClick={() => {
+                logout();
+                setIsYouTabOpen(false);
+              }}
+            >
+              Sign Out
+            </Button>
+          </div>
+        </div>
+      )}
 
       <ChannelDialogue
         isopen={isDialogueOpen}
