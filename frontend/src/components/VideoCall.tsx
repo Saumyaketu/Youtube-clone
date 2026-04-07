@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import io, { Socket } from "socket.io-client";
 import Peer from "simple-peer";
+import { Maximize2, Minimize2 } from 'lucide-react';
 
 interface VideoCallProps {
   roomId: string;
@@ -69,6 +70,7 @@ export default function VideoCall({ roomId }: VideoCallProps) {
 
   const [isMuted, setIsMuted] = useState(false);
   const [isVideoOff, setIsVideoOff] = useState(false);
+  const [pinnedUser, setPinnedUser] = useState<string | null>(null);
 
   const myVideo = useRef<HTMLVideoElement>(null);
   const peersRef = useRef<{ peerID: string; peer: Peer.Instance }[]>([]);
@@ -410,11 +412,33 @@ export default function VideoCall({ roomId }: VideoCallProps) {
 
   return (
     <div className="flex flex-col gap-4 w-full">
-      <div className="grid grid-cols-1 gap-3 w-full">
-        <div className="relative">
-          <span className="text-gray-900 bg-white/80 dark:text-white dark:bg-black/60 absolute z-10 px-2 py-1 m-2 rounded text-xs shadow-md backdrop-blur-sm">
+      <div 
+        className={`grid gap-3 w-full place-content-center mx-auto max-w-7xl transition-all duration-300 ${
+          pinnedUser 
+            ? "grid-cols-[repeat(auto-fit,minmax(120px,1fr))] sm:grid-cols-[repeat(auto-fit,minmax(200px,1fr))]" 
+            : "grid-cols-[repeat(auto-fit,minmax(150px,1fr))] sm:grid-cols-[repeat(auto-fit,minmax(350px,1fr))]"
+        }`}
+      >
+        
+        <div className={`relative group overflow-hidden transition-all duration-300 ${
+          pinnedUser === "local" ? "col-span-full order-first w-full md:w-[85%] mx-auto" : "order-0"
+        }`}>
+          <span className="opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-300 pointer-events-none text-gray-900 bg-white/80 dark:text-white dark:bg-black/60 absolute top-2 left-2 z-10 px-2 py-1 rounded text-xs shadow-md backdrop-blur-sm">
             You {isScreenSharing && "(Sharing Screen)"} {isMuted && "(Muted)"}
           </span>
+          
+          <button 
+             onClick={() => setPinnedUser(pinnedUser === "local" ? null : "local")}
+             className="opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-300 absolute top-2 right-2 z-20 bg-black/60 hover:bg-black/80 text-white p-2 rounded-md backdrop-blur-md shadow-lg border border-white/10"
+             title={pinnedUser === "local" ? "Shrink video" : "Expand video"}
+          >
+             {pinnedUser === "local" ? (
+                <Minimize2 size={16} />
+              ) : (
+                <Maximize2 size={16} />
+              )}
+          </button>
+
           <video
             playsInline
             muted
@@ -423,7 +447,7 @@ export default function VideoCall({ roomId }: VideoCallProps) {
             className={`w-full bg-gray-200 dark:bg-gray-800 rounded-lg aspect-video object-cover shadow-lg border border-gray-300 dark:border-gray-700 transition-colors ${!isScreenSharing && !isVideoOff ? "-scale-x-100" : ""}`}
           />
           {isVideoOff && (
-            <div className="absolute inset-0 flex items-center justify-center bg-gray-900/90 rounded-lg">
+            <div className="absolute inset-0 flex items-center justify-center bg-gray-900/90 rounded-lg pointer-events-none">
               <p className="text-white font-bold text-lg">Camera Off</p>
             </div>
           )}
@@ -432,11 +456,26 @@ export default function VideoCall({ roomId }: VideoCallProps) {
         {peers.map((peerObj) => (
           <div
             key={peerObj.peerID}
-            className="relative transition-all duration-300 animate-in fade-in zoom-in-95"
+            className={`relative group overflow-hidden transition-all duration-300 animate-in fade-in zoom-in-95 ${
+              pinnedUser === peerObj.peerID ? "col-span-full order-first w-full md:w-[85%] mx-auto" : "order-0"
+            }`}
           >
-            <span className="text-gray-900 bg-white/80 dark:text-white dark:bg-black/60 absolute z-10 px-2 py-1 m-2 rounded text-xs shadow-md backdrop-blur-sm">
+            <span className="opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-300 pointer-events-none text-gray-900 bg-white/80 dark:text-white dark:bg-black/60 absolute top-2 left-2 z-10 px-2 py-1 rounded text-xs shadow-md backdrop-blur-sm">
               Participant
             </span>
+
+            <button 
+               onClick={() => setPinnedUser(pinnedUser === peerObj.peerID ? null : peerObj.peerID)}
+               className="opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-300 absolute top-2 right-2 z-20 bg-black/60 hover:bg-black/80 text-white p-2 rounded-md backdrop-blur-md shadow-lg border border-white/10"
+               title={pinnedUser === peerObj.peerID ? "Shrink video" : "Expand video"}
+            >
+               {pinnedUser === peerObj.peerID ? (
+                  <Minimize2 size={16} />
+                ) : (
+                  <Maximize2 size={16} />
+                )}
+            </button>
+
             <Video peer={peerObj.peer} />
           </div>
         ))}

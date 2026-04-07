@@ -167,12 +167,13 @@ const VideoPlayer = ({ video, onNextVideo, onShowComments }: any) => {
           controlsList="nodownload"
           crossOrigin="anonymous"
           onTimeUpdate={handleTimeUpdate}
+          playsInline
         >
           <source src={videoUrl} type="video/mp4" />
           Your browser does not support the video tag.
         </video>
         <div
-          className="absolute top-0 left-0 w-full h-[85%] z-10 cursor-pointer"
+          className="absolute top-0 left-0 w-full h-[60%] md:h-[85%] z-10 cursor-pointer"
           onClick={handleOverlayClick}
         />
       </div>

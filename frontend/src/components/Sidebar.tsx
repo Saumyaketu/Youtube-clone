@@ -29,7 +29,7 @@ const Sidebar = () => {
   return (
     <>
       {/* DESKTOP SIDEBAR */}
-      <aside className="hidden md:block w-64 bg-background border-r border-border min-h-[calc(100vh-64px)] p-2 text-foreground sticky top-0 overflow-y-auto">
+      <aside className="hidden md:block w-64 bg-background border-r border-border h-[calc(100vh-64px)] p-2 text-foreground sticky top-[64px] overflow-y-auto">
         <nav className="space-y-1">
           <Link href="/">
             <Button variant="ghost" className="w-full justify-start">
