@@ -32,19 +32,18 @@ const users = {};
 const socketToRoom = {};
 
 io.on("connection", (socket) => {
-  // console.log("User connected to WebRTC signaling:", socket.id);
-
   socket.on("join-room", (roomId) => {
     console.log(`User ${socket.id} joining room: ${roomId}`);
-    if (users[roomId]) {
+    socket.join(roomId);
+    if (!users[roomId]) {
+      users[roomId] = [];
+    }
+    if (!users[roomId].includes(socket.id)) {
       users[roomId].push(socket.id);
-    } else {
-      users[roomId] = [socket.id];
     }
     socketToRoom[socket.id] = roomId;
 
     const usersInThisRoom = users[roomId].filter((id) => id !== socket.id);
-
     socket.emit("all-users", usersInThisRoom);
   });
 
@@ -74,19 +73,16 @@ io.on("connection", (socket) => {
     });
   });
 
-  socket.on("disconnect", () => {
+  socket.on("disconnecting", () => {
     const roomId = socketToRoom[socket.id];
-    let room = users[roomId];
-    if (room) {
-      room = room.filter((id) => id !== socket.id);
-      if (room.length === 0) {
-        delete users[roomId];
-      } else {
-        users[roomId] = room;
-      }
+    if (roomId && users[roomId]) {
+      users[roomId] = users[roomId].filter((id) => id !== socket.id);
       socket.to(roomId).emit("user-disconnected", socket.id);
-    }
 
+      if (users[roomId].length === 0) {
+        delete users[roomId];
+      }
+    }
     delete socketToRoom[socket.id];
     console.log("User disconnected:", socket.id);
   });

@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-// import axiosInstance from "@/src/lib/AxiosInstance";
 import io, { Socket } from "socket.io-client";
 import Peer from "simple-peer";
 
@@ -11,15 +10,43 @@ interface VideoCallProps {
 
 const Video = ({ peer }: { peer: Peer.Instance }) => {
   const ref = useRef<HTMLVideoElement>(null);
+  const [stream, setStream] = useState<MediaStream | null>(null);
+
   useEffect(() => {
-    if (peer.streams && peer.streams.length > 0) {
-      if (ref.current) ref.current.srcObject = peer.streams[0];
+    if ((peer as any).customStream) {
+      setStream((peer as any).customStream);
+    } else if (peer.streams && peer.streams.length > 0) {
+      setStream(peer.streams[0]);
     }
-    peer.on("stream", (stream) => {
-      if (ref.current) ref.current.srcObject = stream;
+
+    peer.on("stream", (incomingStream) => {
+      (peer as any).customStream = incomingStream;
+      setStream(incomingStream);
     });
+
+    peer.on("track", (track, incomingStream) => {
+      (peer as any).customStream = incomingStream;
+      setStream(incomingStream);
+    });
+
     peer.on("error", (err) => console.error("WebRTC Peer Error:", err));
   }, [peer]);
+
+  useEffect(() => {
+    if (ref.current && stream) {
+      ref.current.srcObject = stream;
+    }
+  }, [stream]);
+
+  if (!stream) {
+    return (
+      <div className="w-full bg-gray-200 dark:bg-gray-900 rounded-lg aspect-video flex items-center justify-center shadow-lg border border-gray-300 dark:border-gray-700">
+        <span className="text-gray-500 dark:text-gray-400 font-medium animate-pulse">
+          Connecting to peer...
+        </span>
+      </div>
+    );
+  }
 
   return (
     <video
@@ -38,6 +65,10 @@ export default function VideoCall({ roomId }: VideoCallProps) {
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [isScreenSharing, setIsScreenSharing] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  const [isMuted, setIsMuted] = useState(false);
+  const [isVideoOff, setIsVideoOff] = useState(false);
 
   const myVideo = useRef<HTMLVideoElement>(null);
   const peersRef = useRef<{ peerID: string; peer: Peer.Instance }[]>([]);
@@ -47,31 +78,70 @@ export default function VideoCall({ roomId }: VideoCallProps) {
   const recordedChunks = useRef<BlobPart[]>([]);
 
   useEffect(() => {
+    let isMounted = true;
+
+    const checkMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    setIsMobile(checkMobile);
+
     const initializeCall = async () => {
       try {
-        // const turnRes = await axiosInstance.get("/turn");
         const secureIceServers = [
           { urls: "stun:stun.l.google.com:19302" },
           { urls: "stun:stun1.l.google.com:19302" },
-          // ...turnRes.data,
+          {
+            urls:  process.env.NEXT_PUBLIC_TURN_URL || "turn:openrelay.metered.ca:80",
+            username: process.env.NEXT_PUBLIC_TURN_USERNAME || "openrelayproject",
+            credential: process.env.NEXT_PUBLIC_TURN_CREDENTIAL || "openrelayproject",
+          },
+          {
+            urls: process.env.NEXT_PUBLIC_TURN_URL_SECURE || "turn:openrelay.metered.ca:443",
+            username: process.env.NEXT_PUBLIC_TURN_USERNAME || "openrelayproject",
+            credential: process.env.NEXT_PUBLIC_TURN_CREDENTIAL || "openrelayproject",
+          },
+          {
+            urls: (process.env.NEXT_PUBLIC_TURN_URL_SECURE || "turn:openrelay.metered.ca:443") + "?transport=tcp",
+            username: process.env.NEXT_PUBLIC_TURN_USERNAME || "openrelayproject",
+            credential: process.env.NEXT_PUBLIC_TURN_CREDENTIAL || "openrelayproject",
+          },
         ];
+
+        const currentStream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            width: { ideal: 640, max: 1280 },
+            height: { ideal: 480, max: 720 },
+            frameRate: { ideal: 24, max: 26 },
+          },
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true,
+          },
+        });
+
+        if (!isMounted) {
+          currentStream.getTracks().forEach((track) => track.stop());
+          return;
+        }
+
+        setStream(currentStream);
+        if (myVideo.current) myVideo.current.srcObject = currentStream;
 
         const SOCKET_URL = process.env.NEXT_PUBLIC_SOCKET_URL || "";
         socketRef.current = io(SOCKET_URL, {
-          transports: ["websocket", "polling"],
+          transports: ["polling", "websocket"],
           secure: true,
         });
 
-        const currentStream = await navigator.mediaDevices.getUserMedia({
-          video: true,
-          audio: true,
+        socketRef.current.on("connect", () => {
+          socketRef.current?.emit("join-room", roomId);
         });
-        setStream(currentStream);
-        if (myVideo.current) myVideo.current.srcObject = currentStream;
 
         socketRef.current.on("all-users", (usersInRoom: string[]) => {
           const peersList: { peerID: string; peer: Peer.Instance }[] = [];
           usersInRoom.forEach((userID) => {
+            if (userID === socketRef.current?.id) return;
+            if (peersRef.current.find((p) => p.peerID === userID)) return;
+
             const mySocketId = socketRef.current?.id || "";
             const peer = createPeer(
               userID,
@@ -82,10 +152,30 @@ export default function VideoCall({ roomId }: VideoCallProps) {
             peersRef.current.push({ peerID: userID, peer });
             peersList.push({ peerID: userID, peer });
           });
-          setPeers(peersList);
+          if (peersList.length > 0) {
+            setPeers((prev) => {
+              const safeToAdd = peersList.filter(
+                (newPeer) =>
+                  !prev.some((existing) => existing.peerID === newPeer.peerID),
+              );
+              return [...prev, ...safeToAdd];
+            });
+          }
         });
 
         socketRef.current.on("user-joined", (payload) => {
+          if (payload.callerID === socketRef.current?.id) return;
+
+          const existingPeerObj = peersRef.current.find(
+            (p) => p.peerID === payload.callerID,
+          );
+          if (existingPeerObj) {
+            if (!existingPeerObj.peer.destroyed) {
+              existingPeerObj.peer.signal(payload.signal);
+            }
+            return;
+          }
+
           const peer = addPeer(
             payload.signal,
             payload.callerID,
@@ -93,29 +183,27 @@ export default function VideoCall({ roomId }: VideoCallProps) {
             secureIceServers,
           );
           peersRef.current.push({ peerID: payload.callerID, peer });
-          setPeers((users) => [...users, { peerID: payload.callerID, peer }]);
+          setPeers((prev) => {
+            if (prev.some((p) => p.peerID === payload.callerID)) return prev;
+            return [...prev, { peerID: payload.callerID, peer }];
+          });
         });
 
         socketRef.current.on("receiving-returned-signal", (payload) => {
           const item = peersRef.current.find((p) => p.peerID === payload.id);
-          if (item) item.peer.signal(payload.signal);
+          if (item && !item.peer.destroyed) {
+            item.peer.signal(payload.signal);
+          }
         });
 
         socketRef.current.on("user-disconnected", (id) => {
           const peerObj = peersRef.current.find((p) => p.peerID === id);
-          if (peerObj) peerObj.peer.destroy();
+          if (peerObj && !peerObj.peer.destroyed) peerObj.peer.destroy();
+
           const peersList = peersRef.current.filter((p) => p.peerID !== id);
           peersRef.current = peersList;
           setPeers(peersList);
         });
-
-        socketRef.current.on("connect", () => {
-          socketRef.current?.emit("join-room", roomId);
-        });
-
-        if (socketRef.current.connected) {
-          socketRef.current.emit("join-room", roomId);
-        }
       } catch (error) {
         console.error("Initialization Failed:", error);
         alert(
@@ -127,9 +215,20 @@ export default function VideoCall({ roomId }: VideoCallProps) {
     initializeCall();
 
     return () => {
+      isMounted = false;
       socketRef.current?.disconnect();
-      stream?.getTracks().forEach((track) => track.stop());
-      peersRef.current.forEach(({ peer }) => peer.destroy());
+
+      if (myVideo.current && myVideo.current.srcObject) {
+        const mediaStream = myVideo.current.srcObject as MediaStream;
+        mediaStream.getTracks().forEach((track) => track.stop());
+        myVideo.current.srcObject = null;
+      }
+
+      peersRef.current.forEach(({ peer }) => {
+        if (!peer.destroyed) peer.destroy();
+      });
+      peersRef.current = [];
+      setPeers([]);
     };
   }, [roomId]);
 
@@ -141,10 +240,15 @@ export default function VideoCall({ roomId }: VideoCallProps) {
   ) {
     const peer = new Peer({
       initiator: true,
-      trickle: false,
+      trickle: true,
       stream,
       config: { iceServers },
     });
+
+    peer.on("stream", (incomingStream) => {
+      (peer as any).customStream = incomingStream;
+    });
+
     peer.on("signal", (signal) => {
       socketRef.current?.emit("sending-signal", {
         userToSignal,
@@ -163,16 +267,50 @@ export default function VideoCall({ roomId }: VideoCallProps) {
   ) {
     const peer = new Peer({
       initiator: false,
-      trickle: false,
+      trickle: true,
       stream,
       config: { iceServers },
     });
+    peer.on("stream", (incomingStream) => {
+      (peer as any).customStream = incomingStream;
+    });
+
     peer.on("signal", (signal) => {
       socketRef.current?.emit("returning-signal", { signal, callerID });
     });
+
     peer.signal(incomingSignal);
     return peer;
   }
+
+  const toggleMute = () => {
+    if (stream) {
+      const audioTrack = stream.getAudioTracks()[0];
+      if (audioTrack) {
+        audioTrack.enabled = !audioTrack.enabled;
+        setIsMuted(!audioTrack.enabled);
+      }
+    }
+  };
+
+  const toggleVideo = () => {
+    if (stream) {
+      const videoTrack = stream.getVideoTracks()[0];
+      if (videoTrack) {
+        videoTrack.enabled = !videoTrack.enabled;
+        setIsVideoOff(!videoTrack.enabled);
+      }
+    }
+  };
+
+  const endCall = () => {
+    socketRef.current?.disconnect();
+    if (myVideo.current?.srcObject) {
+      const mediaStream = myVideo.current.srcObject as MediaStream;
+      mediaStream.getTracks().forEach((track) => track.stop());
+    }
+    window.location.href = "/";
+  };
 
   const toggleScreenShare = async () => {
     if (!isScreenSharing) {
@@ -206,6 +344,11 @@ export default function VideoCall({ roomId }: VideoCallProps) {
     if (stream) {
       const localVideoTrack = stream.getVideoTracks()[0];
 
+      const screenStream = myVideo.current?.srcObject as MediaStream;
+      if (screenStream && screenStream !== stream) {
+        screenStream.getTracks().forEach((track) => track.stop());
+      }
+
       peersRef.current.forEach(({ peer }) => {
         const pc = (peer as any)._pc;
         const videoSender = pc
@@ -225,21 +368,35 @@ export default function VideoCall({ roomId }: VideoCallProps) {
       const streamToRecord = myVideo.current?.srcObject as MediaStream;
       if (!streamToRecord) return;
 
-      const mediaRecorder = new MediaRecorder(streamToRecord, {
-        mimeType: "video/webm",
-      });
+      let mimeType = "";
+      if (MediaRecorder.isTypeSupported("video/webm; codecs=vp9")) {
+        mimeType = "video/webm; codecs=vp9";
+      } else if (MediaRecorder.isTypeSupported("video/webm")) {
+        mimeType = "video/webm";
+      } else if (MediaRecorder.isTypeSupported("video/mp4")) {
+        mimeType = "video/mp4";
+      }
+
+      const options = mimeType ? { mimeType } : {};
+
+      const mediaRecorder = new MediaRecorder(streamToRecord, options);
 
       mediaRecorder.ondataavailable = (e) => {
         if (e.data.size > 0) recordedChunks.current.push(e.data);
       };
 
       mediaRecorder.onstop = () => {
-        const blob = new Blob(recordedChunks.current, { type: "video/webm" });
+        const blobType = mimeType || "video/mp4";
+        const blob = new Blob(recordedChunks.current, { type: blobType });
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
-        a.download = `watch-party-recording-${new Date().toISOString()}.webm`;
+
+        const extension = blobType.includes("mp4") ? "mp4" : "webm";
+        a.download = `watch-party-recording-${new Date().toISOString()}.${extension}`;
+
         a.click();
+        setTimeout(() => URL.revokeObjectURL(url), 100);
       };
 
       mediaRecorder.start();
@@ -256,15 +413,20 @@ export default function VideoCall({ roomId }: VideoCallProps) {
       <div className="grid grid-cols-1 gap-3 w-full">
         <div className="relative">
           <span className="text-gray-900 bg-white/80 dark:text-white dark:bg-black/60 absolute z-10 px-2 py-1 m-2 rounded text-xs shadow-md backdrop-blur-sm">
-            You {isScreenSharing && "(Sharing Screen)"}
+            You {isScreenSharing && "(Sharing Screen)"} {isMuted && "(Muted)"}
           </span>
           <video
             playsInline
             muted
             ref={myVideo}
             autoPlay
-            className="w-full bg-gray-200 dark:bg-gray-800 rounded-lg aspect-video object-cover shadow-lg border border-gray-300 dark:border-gray-700 transition-colors"
+            className={`w-full bg-gray-200 dark:bg-gray-800 rounded-lg aspect-video object-cover shadow-lg border border-gray-300 dark:border-gray-700 transition-colors ${!isScreenSharing && !isVideoOff ? "-scale-x-100" : ""}`}
           />
+          {isVideoOff && (
+            <div className="absolute inset-0 flex items-center justify-center bg-gray-900/90 rounded-lg">
+              <p className="text-white font-bold text-lg">Camera Off</p>
+            </div>
+          )}
         </div>
 
         {peers.map((peerObj) => (
@@ -280,23 +442,42 @@ export default function VideoCall({ roomId }: VideoCallProps) {
         ))}
       </div>
 
-      <div className="flex flex-col gap-2 mt-2">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-2 mt-2">
         <button
-          onClick={toggleScreenShare}
-          className="w-full py-2 text-sm font-semibold bg-gray-200 text-gray-900 dark:bg-gray-800 dark:text-white rounded-md hover:bg-gray-300 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-600 transition"
+          onClick={toggleMute}
+          className={`w-full py-2 text-sm font-semibold text-white rounded-md transition ${isMuted ? "bg-red-600 hover:bg-red-700" : "bg-gray-600 hover:bg-gray-700"}`}
         >
-          {isScreenSharing ? "Stop Screen Share" : "Share Screen"}
+          {isMuted ? "Unmute" : "Mute"}
         </button>
 
         <button
-          onClick={toggleRecording}
-          className={`w-full py-2 text-sm font-semibold text-white rounded-md transition ${
-            isRecording
-              ? "bg-red-600 animate-pulse"
-              : "bg-green-600 hover:bg-green-700"
-          }`}
+          onClick={toggleVideo}
+          className={`w-full py-2 text-sm font-semibold text-white rounded-md transition ${isVideoOff ? "bg-red-600 hover:bg-red-700" : "bg-gray-600 hover:bg-gray-700"}`}
         >
-          {isRecording ? "Stop Recording" : "Record Local View"}
+          {isVideoOff ? "Turn On Camera" : "Turn Off Camera"}
+        </button>
+
+        {!isMobile && (
+          <button
+            onClick={toggleScreenShare}
+            className="w-full py-2 text-sm font-semibold bg-blue-600 text-white rounded-md hover:bg-blue-700 transition"
+          >
+            {isScreenSharing ? "Stop Screen Share" : "Share Screen"}
+          </button>
+        )}
+
+        <button
+          onClick={toggleRecording}
+          className={`w-full py-2 text-sm font-semibold text-white rounded-md transition ${isRecording ? "bg-red-600 animate-pulse" : "bg-green-600 hover:bg-green-700"}`}
+        >
+          {isRecording ? "Stop Recording" : "Record Local"}
+        </button>
+
+        <button
+          onClick={endCall}
+          className="w-full py-2 text-sm font-semibold bg-red-600 text-white rounded-md hover:bg-red-700 transition md:col-span-1 col-span-2"
+        >
+          End Call
         </button>
       </div>
     </div>
