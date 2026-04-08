@@ -7,6 +7,7 @@ import { useUser } from "../lib/AuthContext";
 interface PremiumModalProps {
   isOpen: boolean;
   onClose: () => void;
+  feature?: "watch" | "download";
 }
 
 const PLAN_LIMITS: Record<string, string> = {
@@ -23,7 +24,7 @@ const PLAN_WEIGHTS: Record<string, number> = {
   Gold: 3,
 };
 
-const PremiumModal = ({ isOpen, onClose }: PremiumModalProps) => {
+const PremiumModal = ({ isOpen, onClose, feature = "watch" }: PremiumModalProps) => {
   const { user, login } = useUser();
   const [loading, setLoading] = useState(false);
 
@@ -31,6 +32,11 @@ const PremiumModal = ({ isOpen, onClose }: PremiumModalProps) => {
 
   const currentPlan = user?.plan || "Free";
   const currentWeight = PLAN_WEIGHTS[currentPlan];
+
+  const title =
+    feature === "download"
+      ? "Upgrade to Keep Downloading"
+      : "Upgrade to Keep Watching";
 
   const handlePayment = async (plan: string) => {
     setLoading(true);
@@ -114,17 +120,31 @@ const PremiumModal = ({ isOpen, onClose }: PremiumModalProps) => {
           <X className="w-5 h-5" />
         </button>
 
-        <h2 className="text-2xl font-bold mb-4 dark:text-white">
-          Upgrade to Keep Watching
-        </h2>
+        <h2 className="text-2xl font-bold mb-4 dark:text-white">{title}</h2>
+
         <p className="text-gray-600 mb-6 dark:text-gray-300 text-lg">
-          You've reached your{" "}
-          <strong className="text-black dark:text-white">{currentPlan}</strong>{" "}
-          plan watch limit of{" "}
-          <strong className="text-red-600 dark:text-red-400">
-            {PLAN_LIMITS[currentPlan]}
-          </strong>
-          . Upgrade to a higher tier below to unlock more time!
+          {feature === "download" ? (
+            <>
+              You've reached your{" "}
+              <strong className="text-black dark:text-white">
+                {currentPlan}
+              </strong>{" "}
+              plan daily download limit. Upgrade to a higher tier below to
+              unlock more downloads!
+            </>
+          ) : (
+            <>
+              You've reached your{" "}
+              <strong className="text-black dark:text-white">
+                {currentPlan}
+              </strong>{" "}
+              plan watch limit of{" "}
+              <strong className="text-red-600 dark:text-red-400">
+                {PLAN_LIMITS[currentPlan]}
+              </strong>
+              . Upgrade to a higher tier below to unlock more time!
+            </>
+          )}
         </p>
 
         <div className="grid md:grid-cols-3 gap-6">

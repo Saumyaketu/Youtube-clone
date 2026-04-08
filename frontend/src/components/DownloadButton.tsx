@@ -56,7 +56,7 @@ const DownloadButton = ({ video }: { video: any }) => {
 
       saveToLocal(video);
 
-      await axiosInstance.post(`/user/trackDownload/${user._id}`);
+      await axiosInstance.post(`/user/track-download/${user._id}`);
 
       alert(
         "Download complete! You can view it in your Downloads page offline.",
@@ -102,6 +102,7 @@ const DownloadButton = ({ video }: { video: any }) => {
       <PremiumModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
+        feature="download"
       />
     </>
   );
