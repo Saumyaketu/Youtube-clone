@@ -13,7 +13,7 @@ const VideoPlayer = ({ video, onNextVideo, onShowComments }: any) => {
 
   const [playableSrc, setPlayableSrc] = useState<string>();
 
-  const [totalWatched, setTotalWatched] = useState(user?.watchTimeToday || 0);
+  const [totalWatched, setTotalWatched] = useState(0);
   const unsyncedTimeRef = useRef(0);
   const lastTimeRef = useRef(0);
 
@@ -26,6 +26,26 @@ const VideoPlayer = ({ video, onNextVideo, onShowComments }: any) => {
     Silver: 10 * 60,
     Gold: Infinity,
   };
+
+  useEffect(() => {
+    if (user) {
+      setTotalWatched(user.watchTimeToday || 0);
+    } else {
+      const stored = localStorage.getItem("guestWatchData");
+      if (stored) {
+        try {
+          const { date, time } = JSON.parse(stored);
+          if (date === new Date().toDateString()) {
+            setTotalWatched(time);
+          } else {
+            localStorage.removeItem("guestWatchData");
+          }
+        } catch (e) {
+          console.error("Failed to parse guest watch data");
+        }
+      }
+    }
+  }, [user]);
 
   useEffect(() => {
     lastTimeRef.current = 0;
@@ -86,7 +106,15 @@ const VideoPlayer = ({ video, onNextVideo, onShowComments }: any) => {
     const delta = currentTime - lastTimeRef.current;
 
     if (delta > 0 && delta < 2) {
-      setTotalWatched((prev: number) => prev + delta);
+      setTotalWatched((prev: number) => {
+        const newTotal = prev + delta;
+        if (!user) {
+          const today = new Date().toDateString();
+          localStorage.setItem("guestWatchData", JSON.stringify({ date: today, time: newTotal }));
+        }
+        
+        return newTotal;
+      });
       unsyncedTimeRef.current += delta;
     }
     

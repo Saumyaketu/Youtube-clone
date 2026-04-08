@@ -39,6 +39,10 @@ const PremiumModal = ({ isOpen, onClose, feature = "watch" }: PremiumModalProps)
       : "Upgrade to Keep Watching";
 
   const handlePayment = async (plan: string) => {
+    if (!user) {
+      alert("Please log in or create a free account to upgrade your plan!");
+      return;
+    }
     setLoading(true);
     try {
       const res = await loadScript(
