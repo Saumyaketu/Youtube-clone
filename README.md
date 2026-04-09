@@ -8,10 +8,8 @@ A full-stack video streaming and real-time communication platform built with Nex
 
 Designed with a hybrid architecture (REST + WebSockets + WebRTC) for low-latency interaction.
 
-## Live Demo
-* https://youtube-clone-saumyaketu.vercel.app
-
 ## Demo
+* **Live Site:** https://youtube-clone-saumyaketu.vercel.app
 
 ![App Demo](./assets/demo.gif)
 
@@ -26,6 +24,10 @@ Designed with a hybrid architecture (REST + WebSockets + WebRTC) for low-latency
 * **Payment Integration** — Razorpay for subscriptions & premium features.
 * **PWA Support** — Fully installable app with offline capabilities.
 * **Offline Downloads** — Save videos for later viewing.
+* **Advanced Comment System** — Multilingual translation, city-based tagging, validation, and auto-moderation via dislikes.
+* **Tiered Subscriptions** — Bronze, Silver, and Gold plans with watch-time limits, downloads, and Razorpay billing.
+* **Context-Aware UI & Auth** — Dynamic theming and location-based OTP authentication logic.
+* **Gesture-Controlled Player** — Tap-based controls for seek, pause, navigation, and UI interactions.
 
 ---
 
@@ -96,21 +98,43 @@ graph TD
 ### Watch Party (Real-Time Sync)
 * Create rooms and invite users via unique links.
 * Sync events: `play`, `pause`, and `seek`.
-* Low-latency synchronization utilizing WebSockets.
+* Low-latency synchronization using WebSockets.
 
 ### Video Calling (WebRTC)
-* Direct peer-to-peer connections with signaling via Socket.io.
-* Multi-user chat rooms.
-* Controls: Mute/Unmute audio, toggle video, and pin specific users.
+* Peer-to-peer connections with Socket.io signaling.
+* Multi-user video chat rooms.
+* Controls: mute/unmute, video toggle, and user pinning.
 
 ### Screen Sharing & Recording
-* Screen sharing using native browser APIs.
-* Session recording using the `MediaRecorder` API.
+* Screen sharing via browser APIs.
+* Session recording using MediaRecorder API.
 
 ### Authentication & Payments
-* **Auth:** Google OAuth login, Phone OTP verification, and location-based auth logic.
-* **Payments:** Razorpay integration to unlock premium features and subscriptions.
+* **Auth:** Google OAuth, Phone OTP, and location-based logic.
+* **Payments:** Razorpay integration for subscriptions.
 
+### Advanced Playback & Gestures
+* Custom video player with intuitive screen-tap zones:
+    * Single-tap (center): Play/Pause.
+    * Double-tap (left/right): Seek backward/forward by 10 seconds.
+    * Triple-tap: Next video (center), close player (right), or open comments (left).
+* Watch-time limits enforced based on subscription tier.
+
+### Smart Commenting Engine
+* Multilingual translation support using external APIs.
+* City-level geotagging for user comments.
+* Auto-moderation with dislike-based removal.
+* Input validation to restrict unwanted characters.
+
+### Context-Aware UI & Security
+* Dynamic theming based on time and user location.
+* Location-based authentication (Email OTP vs Mobile OTP).
+
+### Premium Monetization
+* Free tier limited to 1 video download per day.
+* Tiered plans: Bronze, Silver, Gold.
+* Unlimited downloads and extended watch-time for premium users.
+* Automated invoice emails on successful payment.
 ---
 
 ## API Architecture
