@@ -123,3 +123,19 @@
     @apply bg-background text-foreground;
   }
 }
+
+.sidebar-hidden .max-w-7xl {
+  max-width: 100% !important;
+  width: 100% !important;
+  padding-left: 1rem !important;
+  padding-right: 1rem !important;
+}
+
+.sidebar-hidden .max-w-6xl,
+.sidebar-hidden .max-w-5xl,
+.sidebar-hidden .max-w-4xl {
+  max-width: 100% !important;
+  width: 100% !important;
+  padding-left: 1rem !important;
+  padding-right: 1rem !important;
+}

@@ -73,7 +73,7 @@ const DownloadsPage = () => {
 
                   <button
                     onClick={() => removeDownload(video._id, videoUrl)}
-                    className="absolute top-2 right-2 bg-red-600/90 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity z-10 hover:bg-red-700"
+                    className="absolute top-2 right-2 bg-red-600/90 text-white p-2 rounded-full opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity z-10 hover:bg-red-700"
                     title="Remove from downloads"
                   >
                     <Trash2 className="w-4 h-4" />

@@ -1,9 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "../styles/globals.css";
-import Header from "../components/Header";
-import Sidebar from "../components/Sidebar";
-import { Toaster } from "../components/ui/sonner";
+import ClientShell from "../components/ClientShell";
 import { UserProvider } from "../lib/AuthContext";
 import ThemeProvider from "../components/ThemeProvider";
 
@@ -35,15 +33,7 @@ export default function RootLayout({
       >
         <ThemeProvider>
           <UserProvider>
-            <Header />
-            <Toaster />
-            <div className="flex relative">
-              <Sidebar />
-              
-              <main className="flex-1 pb-16 md:pb-0 w-full overflow-x-hidden">
-                {children}
-              </main>
-            </div>
+            <ClientShell>{children}</ClientShell>
           </UserProvider>
         </ThemeProvider>
       </body>

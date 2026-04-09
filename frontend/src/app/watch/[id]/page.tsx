@@ -145,8 +145,8 @@ const Page = ({ params }: PageProps) => {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <div className="max-w-7xl mx-auto p-4">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 space-y-4">
+        <div className="grid grid-cols-1 lg:flex lg:items-start lg:gap-6 gap-6">
+          <div className="lg:flex-1 space-y-4">
             <VideoPlayer
               video={video}
               onNextVideo={handleNextVideo}
@@ -174,7 +174,7 @@ const Page = ({ params }: PageProps) => {
             </div>
           </div>
 
-          <div className="space-y-4">
+          <div className="space-y-4 lg:w-90">
             {(listType === "liked" || listType === "wl") && (
               <div className="bg-popover p-3 rounded-lg mb-2">
                 <h3 className="font-semibold text-sm">

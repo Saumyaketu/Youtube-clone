@@ -38,7 +38,13 @@ const SOUTH_INDIAN_STATES = [
   "telangana",
 ];
 
-const Header = () => {
+const Header = ({
+  onToggleSidebar,
+  sidebarHidden,
+}: {
+  onToggleSidebar?: () => void;
+  sidebarHidden?: boolean;
+}) => {
   const {
     user,
     logout,
@@ -123,7 +129,14 @@ const Header = () => {
 
       <header className="flex items-center justify-between px-4 py-2 bg-background border-border border-b sticky top-0 z-50">
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" className="hidden md:flex">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="hidden md:flex"
+            onClick={() => onToggleSidebar && onToggleSidebar()}
+            aria-label="Toggle sidebar"
+            aria-expanded={!sidebarHidden}
+          >
             <Menu className="w-6 h-6" />
           </Button>
           <Link href="/" className="flex items-center gap-1">

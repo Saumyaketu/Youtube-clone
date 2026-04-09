@@ -160,7 +160,7 @@ const LikedContent = () => {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="opacity-0 group-hover:opacity-100"
+                    className="opacity-100 md:opacity-0 md:group-hover:opacity-100"
                   >
                     <MoreVertical className="w-4 h-4" />
                   </Button>

@@ -20,91 +20,213 @@ import { useUser } from "../lib/AuthContext";
 import { useRouter } from "next/navigation";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 
-const Sidebar = () => {
+const Sidebar = ({
+  compact = false,
+  hideDesktop = false,
+  overlay = false,
+  overlayOpen = false,
+  onOverlayClose,
+}: {
+  compact?: boolean;
+  hideDesktop?: boolean;
+  overlay?: boolean;
+  overlayOpen?: boolean;
+  onOverlayClose?: () => void;
+}) => {
   const { user, logout } = useUser();
   const [isDialogueOpen, setisDialogueOpen] = useState(false);
   const [isYouTabOpen, setIsYouTabOpen] = useState(false);
   const router = useRouter();
 
-  return (
-    <>
-      {/* DESKTOP SIDEBAR */}
-      <aside className="hidden md:block w-64 bg-background border-r border-border h-[calc(100vh-64px)] p-2 text-foreground sticky top-[64px] overflow-y-auto">
-        <nav className="space-y-1">
-          <Link href="/">
-            <Button variant="ghost" className="w-full justify-start">
-              <Home className="w-5 h-5 mr-3" />
-              Home
-            </Button>
-          </Link>
-          <Link href="/explore">
-            <Button variant="ghost" className="w-full justify-start">
-              <Compass className="w-5 h-5 mr-3" />
-              Explore
-            </Button>
-          </Link>
-          <Link href="/subscriptions">
-            <Button variant="ghost" className="w-full justify-start">
-              <PlaySquare className="w-5 h-5 mr-3" />
-              Subscriptions
-            </Button>
-          </Link>
-          <Link href="/video-call">
-            <Button variant="ghost" className="w-full justify-start">
-              <Video className="w-5 h-5 mr-3" />
-              Video Call
-            </Button>
-          </Link>
+  const navContent = (
+    <nav className="space-y-1">
+      <Link href="/">
+        <Button variant="ghost" className="w-full justify-start">
+          <Home className="w-5 h-5 mr-3" />
+          Home
+        </Button>
+      </Link>
+      <Link href="/explore">
+        <Button variant="ghost" className="w-full justify-start">
+          <Compass className="w-5 h-5 mr-3" />
+          Explore
+        </Button>
+      </Link>
+      <Link href="/subscriptions">
+        <Button variant="ghost" className="w-full justify-start">
+          <PlaySquare className="w-5 h-5 mr-3" />
+          Subscriptions
+        </Button>
+      </Link>
+      <Link href="/video-call">
+        <Button variant="ghost" className="w-full justify-start">
+          <Video className="w-5 h-5 mr-3" />
+          Video Call
+        </Button>
+      </Link>
 
-          {user && (
-            <div className="border-t pt-2 mt-2">
-              <Link href="/history">
-                <Button variant="ghost" className="w-full justify-start">
-                  <History className="w-5 h-5 mr-3" />
-                  History
-                </Button>
-              </Link>
-              <Link href="/liked">
-                <Button variant="ghost" className="w-full justify-start">
-                  <ThumbsUp className="w-5 h-5 mr-3" />
-                  Liked videos
-                </Button>
-              </Link>
-              <Link href="/watch-later">
-                <Button variant="ghost" className="w-full justify-start">
-                  <Clock className="w-5 h-5 mr-3" />
-                  Watch later
-                </Button>
-              </Link>
-              <Link href="/downloads">
-                <Button variant="ghost" className="w-full justify-start">
-                  <Clock className="w-5 h-5 mr-3" />
-                  Downloads
-                </Button>
-              </Link>
-              {user?.channelName ? (
-                <Link href={`/channel/${user._id}`}>
-                  <Button variant="ghost" className="w-full justify-start">
-                    <User className="w-5 h-5 mr-3" />
-                    Your channel
-                  </Button>
-                </Link>
-              ) : (
-                <div className="px-2 py-1.5">
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    className="w-full"
-                    onClick={() => setisDialogueOpen(true)}
-                  >
-                    Create Channel
-                  </Button>
-                </div>
-              )}
+      {user && (
+        <div className="border-t pt-2 mt-2">
+          <Link href="/history">
+            <Button variant="ghost" className="w-full justify-start">
+              <History className="w-5 h-5 mr-3" />
+              History
+            </Button>
+          </Link>
+          <Link href="/liked">
+            <Button variant="ghost" className="w-full justify-start">
+              <ThumbsUp className="w-5 h-5 mr-3" />
+              Liked videos
+            </Button>
+          </Link>
+          <Link href="/watch-later">
+            <Button variant="ghost" className="w-full justify-start">
+              <Clock className="w-5 h-5 mr-3" />
+              Watch later
+            </Button>
+          </Link>
+          <Link href="/downloads">
+            <Button variant="ghost" className="w-full justify-start">
+              <Download className="w-5 h-5 mr-3" />
+              Downloads
+            </Button>
+          </Link>
+          {user?.channelName ? (
+            <Link href={`/channel/${user._id}`}>
+              <Button variant="ghost" className="w-full justify-start">
+                <User className="w-5 h-5 mr-3" />
+                Your channel
+              </Button>
+            </Link>
+          ) : (
+            <div className="px-2 py-1.5">
+              <Button
+                variant="secondary"
+                size="sm"
+                className="w-full"
+                onClick={() => setisDialogueOpen(true)}
+              >
+                Create Channel
+              </Button>
             </div>
           )}
-        </nav>
-      </aside>
+        </div>
+      )}
+    </nav>
+  );
+
+  const effectiveCompact = compact || (hideDesktop && !overlay);
+
+  const compactNav = (
+    <nav className="flex flex-col items-center gap-1 w-full">
+      <Link href="/" title="Home" aria-label="Home" className="w-full">
+        <div className="flex items-center justify-center p-3 rounded-md hover:bg-secondary/5">
+          <Home className="w-5 h-5" />
+        </div>
+      </Link>
+
+      <Link href="/explore" title="Explore" aria-label="Explore" className="w-full">
+        <div className="flex items-center justify-center p-3 rounded-md hover:bg-secondary/5">
+          <Compass className="w-5 h-5" />
+        </div>
+      </Link>
+
+      <Link href="/subscriptions" title="Subscriptions" aria-label="Subscriptions" className="w-full">
+        <div className="flex items-center justify-center p-3 rounded-md hover:bg-secondary/5">
+          <PlaySquare className="w-5 h-5" />
+        </div>
+      </Link>
+
+      <Link href="/video-call" title="Video Call" aria-label="Video Call" className="w-full">
+        <div className="flex items-center justify-center p-3 rounded-md hover:bg-secondary/5">
+          <Video className="w-5 h-5" />
+        </div>
+      </Link>
+
+      {user && (
+        <div className="w-full border-t pt-2 mt-2">
+          <Link href="/history" title="History" aria-label="History" className="w-full block">
+            <div className="flex items-center justify-center p-3 rounded-md hover:bg-secondary/5">
+              <History className="w-5 h-5" />
+            </div>
+          </Link>
+
+          <Link href="/liked" title="Liked videos" aria-label="Liked videos" className="w-full block">
+            <div className="flex items-center justify-center p-3 rounded-md hover:bg-secondary/5">
+              <ThumbsUp className="w-5 h-5" />
+            </div>
+          </Link>
+
+          <Link href="/watch-later" title="Watch later" aria-label="Watch later" className="w-full block">
+            <div className="flex items-center justify-center p-3 rounded-md hover:bg-secondary/5">
+              <Clock className="w-5 h-5" />
+            </div>
+          </Link>
+
+          <Link href="/downloads" title="Downloads" aria-label="Downloads" className="w-full block">
+            <div className="flex items-center justify-center p-3 rounded-md hover:bg-secondary/5">
+              <Download className="w-5 h-5" />
+            </div>
+          </Link>
+
+            {user?.channelName ? (
+            <Link href={`/channel/${user._id}`} title="Your channel" aria-label="Your channel" className="w-full block">
+              <div className="flex items-center justify-center p-3 rounded-md hover:bg-secondary/5">
+                <User className="w-5 h-5" />
+              </div>
+            </Link>
+          ) : (
+            <div className="px-2 py-1.5">
+              <button
+                title="Create channel"
+                aria-label="Create channel"
+                onClick={() => setisDialogueOpen(true)}
+                className="w-full flex items-center justify-center p-2 rounded-md hover:bg-secondary/5"
+              >
+                <PlusCircle className="w-5 h-5" />
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+    </nav>
+  );
+
+  return (
+    <>
+      {/* DESKTOP SIDEBAR (overlay or static) */}
+      {overlay && overlayOpen && (
+        <>
+          <div
+            className="fixed inset-0 z-40 bg-black/40"
+            onClick={() => onOverlayClose && onOverlayClose()}
+          />
+          <aside className="fixed top-16 left-0 z-50 w-64 bg-background border-r border-border h-[calc(100vh-64px)] p-2 text-foreground overflow-y-auto animate-in slide-in-from-left-2">
+            <div className="flex items-center justify-end mb-2">
+              <button
+                onClick={() => onOverlayClose && onOverlayClose()}
+                className="p-1 rounded-full hover:bg-secondary"
+                aria-label="Close sidebar"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+            {navContent}
+          </aside>
+        </>
+      )}
+
+      {!overlay && (effectiveCompact ? (
+        <aside className="hidden md:flex flex-col items-center w-16 bg-background border-r border-border h-[calc(100vh-64px)] p-2 sticky top-16 overflow-y-auto">
+          {compactNav}
+        </aside>
+      ) : (
+        <aside
+          className={`hidden md:block w-64 bg-background border-r border-border h-[calc(100vh-64px)] p-2 text-foreground sticky top-16 overflow-y-auto`}
+        >
+          {navContent}
+        </aside>
+      ))}
 
       {/* MOBILE BOTTOM NAVIGATION */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-background border-t border-border flex items-center justify-around py-2 px-1 z-50">

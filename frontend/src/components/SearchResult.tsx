@@ -75,9 +75,9 @@ const SearchResult = ({ query }: any) => {
               : "/file.svg";
 
             return (
-              <div key={item._id} className="flex gap-4 group">
-                <Link href={`/watch/${item._id}`} className="shrink-0">
-                  <div className="relative w-80 aspect-video bg-gray-100 rounded-lg overflow-hidden dark:bg-gray-800">
+              <div key={item._id} className="flex flex-col sm:flex-row gap-4 group items-start">
+                <Link href={`/watch/${item._id}`} className="w-full sm:w-80">
+                  <div className="relative w-full sm:w-80 aspect-video bg-gray-100 rounded-lg overflow-hidden dark:bg-gray-800">
                     <img
                       src={thumbnailUrl}
                       alt={item.videotitle}
