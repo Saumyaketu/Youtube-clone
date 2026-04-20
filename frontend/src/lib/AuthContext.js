@@ -48,7 +48,7 @@ export const UserProvider = ({ children }) => {
 
       const currentHour = new Date().getHours();
       const isTimeBetween10And12 = currentHour >= 10 && currentHour < 12;
-      const isSouthIndia = state && SOUTH_INDIAN_STATES.includes(state);
+      const isSouthIndia = state && SOUTH_INDIAN_STATES.some(southState => state.includes(southState));
       setIsDarkMode(!(isSouthIndia && isTimeBetween10And12));
     };
     fetchLocation();
