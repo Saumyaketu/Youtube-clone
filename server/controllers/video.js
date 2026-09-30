@@ -1,5 +1,34 @@
 import video from "../Modals/Video.js";
 
+const qualityVariants = [
+  { label: "144p", width: 256, height: 144 },
+  { label: "360p", width: 640, height: 360 },
+  { label: "480p", width: 854, height: 480 },
+  { label: "720p", width: 1280, height: 720 },
+  { label: "1080p", width: 1920, height: 1080 },
+];
+
+const addVideoSources = (videoDocument) => {
+  const videoData = videoDocument.toObject
+    ? videoDocument.toObject()
+    : videoDocument;
+  const filepath = videoData.filepath || "";
+
+  if (!filepath.includes("res.cloudinary.com") || !filepath.includes("/video/upload/")) {
+    return videoData;
+  }
+
+  const sources = qualityVariants.map(({ label, width, height }) => ({
+    label,
+    src: filepath.replace(
+      "/video/upload/",
+      `/video/upload/w_${width},h_${height},c_limit,q_auto/`,
+    ),
+  }));
+
+  return { ...videoData, sources };
+};
+
 export const uploadVideo = async (req, res) => {
   if (!req.file) {
     return res
@@ -39,7 +68,7 @@ export const uploadVideo = async (req, res) => {
 export const getAllVideo = async (req, res) => {
   try {
     const files = await video.find();
-    return res.status(200).send(files);
+    return res.status(200).send(files.map(addVideoSources));
   } catch (error) {
     console.error("Fetch error:", error);
     return res.status(500).json({ message: "Something went wrong" });
@@ -50,7 +79,7 @@ export const getUserVideos = async (req, res) => {
   try {
     const { videochannel } = req.params;
     const files = await video.find({ videochannel: videochannel });
-    return res.status(200).send(files);
+    return res.status(200).send(files.map(addVideoSources));
   } catch (error) {
     console.error("Fetch user videos error:", error);
     return res.status(500).json({ message: "Something went wrong" });
