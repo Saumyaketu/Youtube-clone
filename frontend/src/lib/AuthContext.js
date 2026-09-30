@@ -30,15 +30,43 @@ export const UserProvider = ({ children }) => {
   const [pendingUserData, setPendingUserData] = useState(null);
   const [isDarkMode, setIsDarkMode] = useState(true);
 
+  const login = (userData, token) => {
+    setUser(userData);
+    localStorage.setItem("user", JSON.stringify(userData));
+    if (token) localStorage.setItem("authToken", token);
+  };
+
   useEffect(() => {
-    const storedUser = localStorage.getItem("user");
-    if (storedUser) {
+    const restoreSession = async () => {
+      const storedUser = localStorage.getItem("user");
+      if (!storedUser) return;
+
       try {
-        setUser(JSON.parse(storedUser));
+        const parsedUser = JSON.parse(storedUser);
+        const storedToken = localStorage.getItem("authToken");
+
+        if (storedToken) {
+          setUser(parsedUser);
+          return;
+        }
+
+        const response = await axiosInstance.post("/user/login", {
+          email: parsedUser.email,
+          name: parsedUser.name,
+          image: parsedUser.image,
+          skipOtp: true,
+        });
+
+        if (response.data.result && response.data.token) {
+          login(response.data.result, response.data.token);
+        }
       } catch (error) {
-        console.error("Failed to parse stored user", error);
+        console.error("Failed to restore session", error);
+        localStorage.removeItem("user");
       }
-    }
+    };
+
+    restoreSession();
   }, []);
 
   useEffect(() => {
@@ -54,14 +82,10 @@ export const UserProvider = ({ children }) => {
     fetchLocation();
   }, []);
 
-  const login = (userData) => {
-    setUser(userData);
-    localStorage.setItem("user", JSON.stringify(userData));
-  };
-
   const logout = async () => {
     setUser(null);
     localStorage.removeItem("user");
+    localStorage.removeItem("authToken");
     sessionStorage.removeItem("pendingOtp");
     try {
       await signOut(auth);
@@ -77,7 +101,7 @@ export const UserProvider = ({ children }) => {
         "recaptcha-container",
         {
           size: "invisible",
-          callback: (response) => {
+          callback: () => {
             // reCAPTCHA solved
           },
         },
@@ -148,7 +172,7 @@ export const UserProvider = ({ children }) => {
         });
         if (response.data.result) {
           sessionStorage.removeItem("pendingOtp");
-          login(response.data.result);
+          login(response.data.result, response.data.token);
           setShowOtpModal(false);
           return true;
         }
@@ -159,7 +183,7 @@ export const UserProvider = ({ children }) => {
           const response = await axiosInstance.post("/user/login", payload);
           if (response.data.result) {
             sessionStorage.removeItem("pendingOtp");
-            login(response.data.result);
+            login(response.data.result, response.data.token);
             setShowOtpModal(false);
             return true;
           }
@@ -186,7 +210,7 @@ export const UserProvider = ({ children }) => {
           };
           const response = await axiosInstance.post("/user/login", payload);
           if (response.data.result) {
-            login(response.data.result);
+            login(response.data.result, response.data.token);
           }
         } catch (error) {
           console.error(error);

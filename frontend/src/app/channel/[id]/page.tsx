@@ -4,61 +4,88 @@ import ChannelTabs from "@/src/components/ChannelTabs";
 import ChannelVideos from "@/src/components/ChannelVideos";
 import VideoUploader from "@/src/components/VideoUploader";
 import { useUser } from "@/src/lib/AuthContext";
-import axios from "axios";
-import { notFound, useParams } from "next/navigation";
+import axiosInstance from "@/src/lib/AxiosInstance";
+import { useParams } from "next/navigation";
 import React, { useEffect, useState } from "react";
 
-const page = () => {
+type Channel = {
+  _id: string;
+  channelName?: string;
+  description?: string;
+  image?: string;
+};
+
+type ChannelVideo = {
+  _id: string;
+  videotitle: string;
+  videochannel: string;
+  filepath: string;
+  duration?: number;
+  views: number;
+  createdAt?: string;
+};
+
+const ChannelPage = () => {
   const params = useParams();
   const id = params?.id as string;
   const { user } = useUser();
-  const [videos, setVideos] = useState([]);
+  const [channel, setChannel] = useState<Channel | null>(null);
+  const [videos, setVideos] = useState<ChannelVideo[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    const fetchVideos = async () => {
-      if (user?.channelName) {
-        try {
-          const response = await axios.get(
-            `${process.env.NEXT_PUBLIC_BACKEND_URL}/video/getuservideos/${user.channelName}`
+    const fetchChannel = async () => {
+      if (!id) return;
+
+      try {
+        const profileResponse = await axiosInstance.get(`/user/profile/${id}`);
+        const profile = profileResponse.data.result as Channel;
+        setChannel(profile);
+
+        if (profile.channelName) {
+          const videosResponse = await axiosInstance.get(
+            `/video/getuservideos/${encodeURIComponent(profile.channelName)}`,
           );
-          setVideos(response.data);
-        } catch (error) {
-          console.error("Error fetching videos:", error);
+          setVideos(videosResponse.data);
         }
+      } catch (fetchError) {
+        console.error("Error fetching channel:", fetchError);
+        setError("Unable to load this channel.");
+      } finally {
+        setLoading(false);
       }
     };
 
-    fetchVideos();
-  }, [user]);
+    fetchChannel();
+  }, [id]);
 
-  if (!user) {
-    return <div className="p-4 text-center">Loading...</div>;
+  if (loading) {
+    return <div className="p-4 text-center">Loading channel...</div>;
   }
 
-  try {
-    let channel = user;
-    if (!channel) {
-      notFound();
-    }
+  if (error || !channel) {
+    return <div className="p-4 text-center">{error || "Channel not found."}</div>;
+  }
 
-    return (
-      <div className="flex-1 min-h-screen dark:bg-black-900 dark:text-white">
-        <div className="max-w-full mx-auto">
-          <ChannelHeader channel={channel} />
-          <ChannelTabs />
+  const isOwner = user?._id === channel._id;
+
+  return (
+    <div className="flex-1 min-h-screen dark:bg-black-900 dark:text-white">
+      <div className="max-w-full mx-auto">
+        <ChannelHeader channel={channel} />
+        <ChannelTabs />
+        {isOwner && (
           <div className="px-4 pb-8">
-            <VideoUploader channelId={id} channelName={channel.channelName} />
+            <VideoUploader channelId={channel._id} channelName={channel.channelName} />
           </div>
-          <div className="px-4 pb-8">
-            <ChannelVideos videos={videos} />
-          </div>
+        )}
+        <div className="px-4 pb-8">
+          <ChannelVideos videos={videos} />
         </div>
       </div>
-    );
-  } catch (error) {
-    console.error("Error fetching channel data:", error);
-    notFound();
-  }
+    </div>
+  );
 };
 
-export default page;
+export default ChannelPage;

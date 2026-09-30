@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 import users from "../Modals/Auth.js";
 import nodemailer from "nodemailer";
 import dotenv from "dotenv";
+import { createAuthToken } from "../middleware/auth.js";
 
 dotenv.config();
 
@@ -22,6 +23,12 @@ const SOUTH_INDIAN_STATES = [
 ];
 const otpStore = new Map();
 
+const authResponse = (user, message) => ({
+  result: user,
+  token: createAuthToken(user),
+  ...(message ? { message } : {}),
+});
+
 export const login = async (req, res) => {
   const { email, name, image, state, phone, skipOtp } = req.body;
 
@@ -37,7 +44,7 @@ export const login = async (req, res) => {
           existingUser.phone = phone;
           await existingUser.save();
         }
-        return res.status(200).json({ result: existingUser });
+        return res.status(200).json(authResponse(existingUser));
       } else {
         const newUser = await users.create({
           email,
@@ -45,7 +52,7 @@ export const login = async (req, res) => {
           image,
           phone: phone || null,
         });
-        return res.status(200).json({ result: newUser });
+        return res.status(200).json(authResponse(newUser));
       }
     }
 
@@ -117,7 +124,9 @@ export const verifyOTP = async (req, res) => {
         existingUser.phone = phone;
         await existingUser.save();
       }
-      return res.status(200).json({ result: existingUser, message: "Firebase Mobile Login successful" });
+      return res.status(200).json(
+        authResponse(existingUser, "Firebase Mobile Login successful"),
+      );
     }
 
     if (!otpStore.has(email)) return res.status(400).json({ message: "OTP expired or invalid" });
@@ -135,13 +144,17 @@ export const verifyOTP = async (req, res) => {
         image: storedData.image,
         phone: storedData.phone || null,
       });
-      return res.status(200).json({ result: newUser, message: "Email Login successful" });
+      return res.status(200).json(
+        authResponse(newUser, "Email Login successful"),
+      );
     } else {
       if (storedData.phone && !existingUser.phone) {
         existingUser.phone = storedData.phone;
         await existingUser.save();
       }
-      return res.status(200).json({ result: existingUser, message: "Email Login successful" });
+      return res.status(200).json(
+        authResponse(existingUser, "Email Login successful"),
+      );
     }
   } catch (error) {
     console.error("Verification error:", error);
@@ -169,6 +182,48 @@ export const updateProfile = async (req, res) => {
     return res.status(200).json({ updatedData });
   } catch (error) {
     console.error(error);
+    return res.status(500).json({ message: "Something went wrong" });
+  }
+};
+
+export const getProfile = async (req, res) => {
+  const { id } = req.params;
+
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    return res.status(400).json({ message: "Invalid user ID" });
+  }
+
+  try {
+    const profile = await users
+      .findById(id)
+      .select("name channelName description image joinedOn createdAt");
+
+    if (!profile) return res.status(404).json({ message: "Channel not found" });
+
+    return res.status(200).json({ result: profile });
+  } catch (error) {
+    console.error("Get profile error:", error);
+    return res.status(500).json({ message: "Something went wrong" });
+  }
+};
+
+export const getProfileByChannelName = async (req, res) => {
+  const { channelName } = req.params;
+
+  if (!channelName) {
+    return res.status(400).json({ message: "Channel name is required" });
+  }
+
+  try {
+    const profile = await users
+      .findOne({ channelName: decodeURIComponent(channelName) })
+      .select("name channelName description image joinedOn createdAt");
+
+    if (!profile) return res.status(404).json({ message: "Channel not found" });
+
+    return res.status(200).json({ result: profile });
+  } catch (error) {
+    console.error("Get profile by channel name error:", error);
     return res.status(500).json({ message: "Something went wrong" });
   }
 };

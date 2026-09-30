@@ -20,7 +20,7 @@ const storage = new CloudinaryStorage({
   params: {
     folder: "youtube-clone/videos",
     resource_type: "video",
-    allowed_formats: ["mp4", "mkv", "webm"],
+    allowed_formats: ["mp4", "mkv", "webm", "mov", "avi"],
   },
 });
 

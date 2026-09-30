@@ -6,6 +6,8 @@ import {
   checkDownloadEligibility,
   trackDownload,
   syncWatchTime,
+  getProfile,
+  getProfileByChannelName,
 } from "../controllers/auth.js";
 
 const routes = express.Router();
@@ -13,6 +15,8 @@ const routes = express.Router();
 routes.post("/login", login);
 routes.post("/verify-otp", verifyOTP);
 routes.patch("/update/:id", updateProfile);
+routes.get("/profile/:id", getProfile);
+routes.get("/channel/:channelName", getProfileByChannelName);
 routes.get("/check-download/:id", checkDownloadEligibility);
 routes.post("/track-download/:id", trackDownload);
 routes.post("/sync-watch-time/:id", syncWatchTime);

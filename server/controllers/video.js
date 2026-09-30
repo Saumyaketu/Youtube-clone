@@ -7,14 +7,18 @@ export const uploadVideo = async (req, res) => {
       .json({ message: "Please upload a valid video file" });
   }
   try {
+    if (!req.user.channelName) {
+      return res.status(400).json({ message: "Create a channel before uploading" });
+    }
+
     const file = new video({
       videotitle: req.body.videotitle,
       filename: req.file.originalname,
       filepath: req.file.path,
       filetype: req.file.mimetype,
       filesize: req.file.size || 0,
-      videochannel: req.body.videochannel,
-      uploader: req.body.uploader,
+      videochannel: req.user.channelName,
+      uploader: req.user._id.toString(),
       duration: req.body.duration || 0,
     });
 

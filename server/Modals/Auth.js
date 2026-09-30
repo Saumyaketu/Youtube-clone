@@ -9,6 +9,7 @@ const userSchema = mongoose.Schema(
     image: { type: String },
     phone: { type: String },
     state: { type: String },
+    subscriptions: [{ type: mongoose.Schema.Types.ObjectId, ref: "user" }],
     joinedOn: { type: Date, default: Date.now },
     plan: {
       type: String,

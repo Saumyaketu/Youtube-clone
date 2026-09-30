@@ -1,12 +1,81 @@
 "use client";
 import { Avatar, AvatarFallback } from "./ui/avatar";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Button } from "./ui/button";
 import { useUser } from "../lib/AuthContext";
+import {
+  getSubscriberCount,
+  getSubscriptionStatus,
+  subscribe,
+  unsubscribe,
+} from "../lib/subscriptionApi";
 
-const ChannelHeader = ({ channel }: any) => {
+type Channel = {
+  _id?: string;
+  channelName?: string;
+  description?: string;
+};
+
+const ChannelHeader = ({ channel }: { channel: Channel }) => {
   const { user } = useUser();
   const [isSubscribed, setIsSubscribed] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isCheckingStatus, setIsCheckingStatus] = useState(true);
+  const [subscriberCount, setSubscriberCount] = useState(0);
+
+  useEffect(() => {
+    const fetchSubscriberCount = async () => {
+      if (!channel?._id) return;
+
+      try {
+        setSubscriberCount(await getSubscriberCount(channel._id));
+      } catch (error) {
+        console.error("Error fetching subscriber count:", error);
+      }
+    };
+
+    fetchSubscriberCount();
+  }, [channel?._id]);
+
+  useEffect(() => {
+    const fetchSubscriptionStatus = async () => {
+      if (!user?._id || !channel?._id || user._id === channel._id) {
+        setIsCheckingStatus(false);
+        return;
+      }
+
+      try {
+        setIsSubscribed(await getSubscriptionStatus(user._id, channel._id));
+      } catch (error) {
+        console.error("Error fetching subscription status:", error);
+      } finally {
+        setIsCheckingStatus(false);
+      }
+    };
+
+    fetchSubscriptionStatus();
+  }, [user?._id, channel?._id]);
+
+  const handleSubscription = async () => {
+    if (!user?._id || !channel?._id || isLoading) return;
+
+    setIsLoading(true);
+    try {
+      if (isSubscribed) {
+        await unsubscribe(user._id, channel._id);
+        setIsSubscribed(false);
+        setSubscriberCount((count) => Math.max(0, count - 1));
+      } else {
+        await subscribe(user._id, channel._id);
+        setIsSubscribed(true);
+        setSubscriberCount((count) => count + 1);
+      }
+    } catch (error) {
+      console.error("Error updating subscription:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div className="w-full">
@@ -28,6 +97,7 @@ const ChannelHeader = ({ channel }: any) => {
               <span>
                 @{(channel?.channelName || "").toLowerCase().replace(/\s+/g, "")}
               </span>
+              <span>{subscriberCount.toLocaleString()} subscribers</span>
             </div>
             {channel?.description && (
               <p className="text-sm text-gray-700 dark:text-gray-300 max-w-2xl">
@@ -39,7 +109,8 @@ const ChannelHeader = ({ channel }: any) => {
           {user && user?._id !== channel?._id && (
             <div className="flex gap-2">
                 <Button
-                  onClick={() => setIsSubscribed(!isSubscribed)}
+                  onClick={handleSubscription}
+                  disabled={isLoading || isCheckingStatus}
                   variant={isSubscribed ? "outline" : "default"}
                   className={
                     isSubscribed
@@ -47,7 +118,11 @@ const ChannelHeader = ({ channel }: any) => {
                       : "bg-red-600 hover:bg-red-700"
                   }
                 >
-                  {isSubscribed ? "Unsubscribe" : "Subscribe"}
+                  {isLoading
+                    ? "Updating..."
+                    : isSubscribed
+                      ? "Unsubscribe"
+                      : "Subscribe"}
                 </Button>
             </div>
           )}

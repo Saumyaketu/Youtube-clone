@@ -1,5 +1,6 @@
 "use client";
 import { Check, FileVideo, Upload, X } from "lucide-react";
+import axios, { AxiosProgressEvent } from "axios";
 import React, { ChangeEvent, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "./ui/button";
@@ -8,7 +9,13 @@ import { Input } from "./ui/input";
 import { Progress } from "@radix-ui/react-progress";
 import axiosInstance from "../lib/AxiosInstance";
 
-const VideoUploader = ({ channelId, channelName }: any) => {
+const VideoUploader = ({
+  channelId,
+  channelName,
+}: {
+  channelId: string;
+  channelName?: string;
+}) => {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [videoFile, setVideoFile] = useState<File | null>(null);
@@ -72,19 +79,18 @@ const VideoUploader = ({ channelId, channelName }: any) => {
     const formData = new FormData();
     formData.append("file", videoFile);
     formData.append("videotitle", videoTitle);
-    formData.append("videochannel", channelName);
+    formData.append("videochannel", channelName || "");
     formData.append("uploader", channelId);
     formData.append("duration", videoDuration.toString());
     try {
       setIsUploading(true);
       setUploadProgress(0);
-      const res = await axiosInstance.post("/video/upload", formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-        onUploadProgress: (progressEvent: any) => {
+      await axiosInstance.post("/video/upload", formData, {
+        onUploadProgress: (progressEvent: AxiosProgressEvent) => {
           const progress = Math.round(
-            (progressEvent.loaded * 100) / progressEvent.total,
+            progressEvent.total
+              ? (progressEvent.loaded * 100) / progressEvent.total
+              : 0,
           );
           setUploadProgress(progress);
         },
@@ -92,8 +98,12 @@ const VideoUploader = ({ channelId, channelName }: any) => {
       toast.success("Uploaded successfully");
       resetForm();
     } catch (error) {
-      console.log(error);
-      toast.error("Error in uploading video");
+      console.error("Video upload error:", error);
+      const message =
+        axios.isAxiosError(error) && error.response?.data?.message
+          ? error.response.data.message
+          : "Error in uploading video";
+      toast.error(message);
     } finally {
       setIsUploading(false);
     }

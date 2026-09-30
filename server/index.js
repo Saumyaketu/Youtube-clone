@@ -13,6 +13,7 @@ import watchlaterRoutes from "./routes/watchlater.js";
 import historyRoutes from "./routes/history.js";
 import commentRoutes from "./routes/comment.js";
 import paymentRoutes from "./routes/payment.js";
+import subscriptionRoutes from "./routes/subscription.js";
 // import turnRoutes from "./routes/turn.js";
 
 dotenv.config();
@@ -110,6 +111,7 @@ app.use("/watch", watchlaterRoutes);
 app.use("/history", historyRoutes);
 app.use("/comment", commentRoutes);
 app.use("/payment", paymentRoutes);
+app.use("/subscription", subscriptionRoutes);
 
 const PORT = process.env.PORT || 5000;
 
