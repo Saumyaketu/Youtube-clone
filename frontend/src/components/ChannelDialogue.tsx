@@ -10,7 +10,7 @@ import { Button } from "./ui/button";
 import axiosInstance from "../lib/AxiosInstance";
 import { useUser } from "../lib/AuthContext";
 
-const ChannelDialogue = ({ isopen, onclose, channeldata, mode }: any) => {
+const ChannelDialogue = ({ isopen, onclose, channeldata, mode, onSuccess }: any) => {
   const { user, login } = useUser();
 
   // const user: any = {
@@ -67,9 +67,18 @@ const ChannelDialogue = ({ isopen, onclose, channeldata, mode }: any) => {
         `/user/update/${userId}`,
         payload,
       );
-      login(response?.data);
-      
-      router.push(`/channel/${userId}`);
+
+      const updatedUser = response?.data?.updatedData ?? response?.data;
+      if (updatedUser) {
+        login(updatedUser);
+      }
+
+      if (typeof onSuccess === "function") {
+        onSuccess(updatedUser);
+      } else if (mode !== "edit") {
+        router.push(`/channel/${userId}`);
+      }
+
       setFormData({
         name: "",
         description: "",

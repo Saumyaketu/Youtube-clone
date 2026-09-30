@@ -1,5 +1,6 @@
 "use client";
 import ChannelHeader from "@/src/components/ChannelHeader";
+import ChannelDialogue from "@/src/components/ChannelDialogue";
 import ChannelTabs from "@/src/components/ChannelTabs";
 import ChannelVideos from "@/src/components/ChannelVideos";
 import VideoUploader from "@/src/components/VideoUploader";
@@ -23,6 +24,13 @@ type ChannelVideo = {
   duration?: number;
   views: number;
   createdAt?: string;
+  description?: string;
+};
+
+type UpdatedChannelUser = {
+  _id?: string;
+  channelName?: string;
+  description?: string;
 };
 
 const ChannelPage = () => {
@@ -33,6 +41,7 @@ const ChannelPage = () => {
   const [videos, setVideos] = useState<ChannelVideo[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [isChannelDialogOpen, setIsChannelDialogOpen] = useState(false);
 
   useEffect(() => {
     const fetchChannel = async () => {
@@ -73,7 +82,11 @@ const ChannelPage = () => {
   return (
     <div className="flex-1 min-h-screen dark:bg-black-900 dark:text-white">
       <div className="max-w-full mx-auto">
-        <ChannelHeader channel={channel} />
+        <ChannelHeader
+          channel={channel}
+          isOwner={isOwner}
+          onEdit={() => setIsChannelDialogOpen(true)}
+        />
         <ChannelTabs />
         {isOwner && (
           <div className="px-4 pb-8">
@@ -81,9 +94,40 @@ const ChannelPage = () => {
           </div>
         )}
         <div className="px-4 pb-8">
-          <ChannelVideos videos={videos} />
+          <ChannelVideos
+            videos={videos}
+            isOwner={isOwner}
+            onUpdateVideo={(updatedVideo: Partial<ChannelVideo>) => {
+              setVideos((currentVideos) =>
+                currentVideos.map((video) =>
+                  video._id === updatedVideo._id
+                    ? { ...video, ...updatedVideo }
+                    : video,
+                ),
+              );
+            }}
+          />
         </div>
       </div>
+
+      {isOwner && (
+        <ChannelDialogue
+          isopen={isChannelDialogOpen}
+          onclose={() => setIsChannelDialogOpen(false)}
+          channeldata={channel}
+          mode="edit"
+          onSuccess={(updatedUser: UpdatedChannelUser | null) => {
+            if (!updatedUser) return;
+            setChannel((previous) => previous
+              ? {
+                  ...previous,
+                  channelName: updatedUser.channelName || previous.channelName,
+                  description: updatedUser.description ?? previous.description,
+                }
+              : previous);
+          }}
+        />
+      )}
     </div>
   );
 };

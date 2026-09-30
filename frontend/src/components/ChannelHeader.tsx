@@ -16,7 +16,7 @@ type Channel = {
   description?: string;
 };
 
-const ChannelHeader = ({ channel }: { channel: Channel }) => {
+const ChannelHeader = ({ channel, isOwner, onEdit }: { channel: Channel; isOwner?: boolean; onEdit?: () => void }) => {
   const { user } = useUser();
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -100,31 +100,43 @@ const ChannelHeader = ({ channel }: { channel: Channel }) => {
               <span>{subscriberCount.toLocaleString()} subscribers</span>
             </div>
             {channel?.description && (
-              <p className="text-sm text-gray-700 dark:text-gray-300 max-w-2xl">
+              <p className="text-sm text-gray-700 dark:text-gray-300 max-w-2xl whitespace-pre-wrap break-words">
                 {channel?.description}
               </p>
             )}
           </div>
 
-          {user && user?._id !== channel?._id && (
+          {user && user?._id === channel?._id ? (
             <div className="flex gap-2">
-                <Button
-                  onClick={handleSubscription}
-                  disabled={isLoading || isCheckingStatus}
-                  variant={isSubscribed ? "outline" : "default"}
-                  className={
-                    isSubscribed
-                      ? "bg-gray-100 dark:bg-gray-700"
-                      : "bg-red-600 hover:bg-red-700"
-                  }
-                >
-                  {isLoading
-                    ? "Updating..."
-                    : isSubscribed
-                      ? "Unsubscribe"
-                      : "Subscribe"}
-                </Button>
+              <Button
+                variant="outline"
+                onClick={onEdit}
+                disabled={!onEdit}
+              >
+                Edit channel
+              </Button>
             </div>
+          ) : (
+            user && user?._id !== channel?._id && (
+              <div className="flex gap-2">
+                  <Button
+                    onClick={handleSubscription}
+                    disabled={isLoading || isCheckingStatus}
+                    variant={isSubscribed ? "outline" : "default"}
+                    className={
+                      isSubscribed
+                        ? "bg-gray-100 dark:bg-gray-700"
+                        : "bg-red-600 hover:bg-red-700"
+                    }
+                  >
+                    {isLoading
+                      ? "Updating..."
+                      : isSubscribed
+                        ? "Unsubscribe"
+                        : "Subscribe"}
+                  </Button>
+              </div>
+            )
           )}
         </div>
       </div>

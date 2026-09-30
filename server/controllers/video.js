@@ -11,8 +11,13 @@ export const uploadVideo = async (req, res) => {
       return res.status(400).json({ message: "Create a channel before uploading" });
     }
 
+    const description = typeof req.body.description === "string"
+      ? req.body.description.trim()
+      : "";
+
     const file = new video({
       videotitle: req.body.videotitle,
+      description,
       filename: req.file.originalname,
       filepath: req.file.path,
       filetype: req.file.mimetype,
@@ -48,6 +53,49 @@ export const getUserVideos = async (req, res) => {
     return res.status(200).send(files);
   } catch (error) {
     console.error("Fetch user videos error:", error);
+    return res.status(500).json({ message: "Something went wrong" });
+  }
+};
+
+export const updateVideo = async (req, res) => {
+  const { id } = req.params;
+  const { videotitle, description } = req.body;
+
+  try {
+    const existingVideo = await video.findOne({
+      _id: id,
+      uploader: req.user._id.toString(),
+    });
+
+    if (!existingVideo) {
+      return res.status(403).json({ message: "Not authorized to edit this video" });
+    }
+
+    const updateFields = {};
+    if (typeof videotitle === "string") {
+      const trimmedTitle = videotitle.trim();
+      if (trimmedTitle) {
+        updateFields.videotitle = trimmedTitle;
+      }
+    }
+
+    if (typeof description === "string") {
+      updateFields.description = description.trim();
+    }
+
+    if (Object.keys(updateFields).length === 0) {
+      return res.status(400).json({ message: "No valid updates provided" });
+    }
+
+    const updatedVideo = await video.findByIdAndUpdate(
+      id,
+      { $set: updateFields },
+      { new: true },
+    );
+
+    return res.status(200).json({ updatedVideo });
+  } catch (error) {
+    console.error("Update video error:", error);
     return res.status(500).json({ message: "Something went wrong" });
   }
 };

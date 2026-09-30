@@ -38,7 +38,9 @@ export const verifyAuthToken = async (req, res, next) => {
 };
 
 export const requireMatchingUser = (req, res, next) => {
-  if (req.params.userId !== req.user._id.toString()) {
+  const requestedUserId = req.params.userId || req.params.id;
+
+  if (!requestedUserId || requestedUserId !== req.user._id.toString()) {
     return res.status(403).json({ message: "Not authorized for this user" });
   }
 

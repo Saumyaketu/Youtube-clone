@@ -11,6 +11,7 @@ import {
   ThumbsUp,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+import { toast } from "sonner";
 import { useUser } from "../lib/AuthContext";
 import axiosInstance from "../lib/AxiosInstance";
 import PremiumModal from "./PremiumModal";
@@ -26,6 +27,7 @@ import {
 type VideoInfoData = {
   _id: string;
   videotitle: string;
+  description?: string;
   videochannel?: string;
   uploader?: string;
   Like?: number;
@@ -43,12 +45,22 @@ const VideoInfo = ({ video }: { video: VideoInfoData }) => {
   const [isWatchlater, setIsWatchlater] = useState(false);
   const [showPremiumModal, setShowPremiumModal] = useState(false);
   const [isSubscribed, setIsSubscribed] = useState(false);
+  const [videoDetails, setVideoDetails] = useState<VideoInfoData>(video);
+  const [isEditingDetails, setIsEditingDetails] = useState(false);
+  const [draftTitle, setDraftTitle] = useState(video.videotitle || "");
+  const [draftDescription, setDraftDescription] = useState(video.description || "");
   const [isSubscriptionLoading, setIsSubscriptionLoading] = useState(false);
   const [isCheckingSubscription, setIsCheckingSubscription] = useState(true);
   const [channelId, setChannelId] = useState(video?.uploader || "");
   const [subscriberCount, setSubscriberCount] = useState(0);
 
   const { user } = useUser();
+
+  useEffect(() => {
+    setVideoDetails(video);
+    setDraftTitle(video.videotitle || "");
+    setDraftDescription(video.description || "");
+  }, [video]);
 
   useEffect(() => {
     let isCurrent = true;
@@ -186,6 +198,31 @@ const VideoInfo = ({ video }: { video: VideoInfoData }) => {
     fetchWatchlaterStatus();
   }, [video, user]);
 
+  const isOwner = !!user && !!(videoDetails?.uploader || channelId) && user._id === (videoDetails?.uploader || channelId);
+
+  const handleSaveVideoDetails = async () => {
+    if (!user?._id || !videoDetails?._id) return;
+
+    try {
+      const response = await axiosInstance.patch(`/video/${videoDetails._id}`, {
+        videotitle: draftTitle,
+        description: draftDescription,
+      });
+
+      const updatedVideo = response?.data?.updatedVideo ?? response?.data;
+      if (updatedVideo) {
+        const mergedVideo = { ...videoDetails, ...updatedVideo };
+        setVideoDetails(mergedVideo);
+        setShowFullDescription(Boolean(mergedVideo.description));
+        toast.success("Video updated successfully");
+      }
+      setIsEditingDetails(false);
+    } catch (error) {
+      console.error("Error updating video details:", error);
+      toast.error("Unable to update this video");
+    }
+  };
+
   const handleLike = async () => {
     if (!user) return;
     try {
@@ -253,9 +290,20 @@ const VideoInfo = ({ video }: { video: VideoInfoData }) => {
 
   return (
     <div className="space-y-3 md:space-y-4 px-2 md:px-0">
-      <h1 className="text-lg md:text-xl font-semibold line-clamp-2 leading-tight">
-        {video.videotitle}
-      </h1>
+      <div className="flex items-start justify-between gap-3">
+        <h1 className="text-lg md:text-xl font-semibold line-clamp-2 leading-tight">
+          {videoDetails.videotitle}
+        </h1>
+        {isOwner && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setIsEditingDetails(true)}
+          >
+            Edit video
+          </Button>
+        )}
+      </div>
 
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 md:gap-4">
         <div className="flex items-center justify-between w-full md:w-auto">
@@ -372,20 +420,48 @@ const VideoInfo = ({ video }: { video: VideoInfoData }) => {
         <div
           className={`text-sm text-gray-800 dark:text-gray-200 ${showFullDescription ? "" : "line-clamp-2 md:line-clamp-3"}`}
         >
-          <p>
-            Sample video description. This would contain the actual video
-            description from the database.
+          <p className="whitespace-pre-wrap break-words">
+            {videoDetails.description || "No description available."}
           </p>
         </div>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="mt-1 p-0 h-auto font-bold hover:bg-transparent"
-          onClick={() => setShowFullDescription(!showFullDescription)}
-        >
-          {showFullDescription ? "Show less" : "more"}
-        </Button>
+        {videoDetails.description && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="mt-1 p-0 h-auto font-bold hover:bg-transparent"
+            onClick={() => setShowFullDescription(!showFullDescription)}
+          >
+            {showFullDescription ? "Show less" : "more"}
+          </Button>
+        )}
       </div>
+
+      {isEditingDetails && (
+        <div className="bg-gray-100 rounded-xl p-4 dark:bg-gray-800 mt-2 space-y-3">
+          <div>
+            <label className="text-sm font-medium">Title</label>
+            <input
+              value={draftTitle}
+              onChange={(e) => setDraftTitle(e.target.value)}
+              className="mt-1 flex h-9 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-xs focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
+            />
+          </div>
+          <div>
+            <label className="text-sm font-medium">Description</label>
+            <textarea
+              value={draftDescription}
+              onChange={(e) => setDraftDescription(e.target.value)}
+              className="mt-1 flex min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-xs focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
+            />
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setIsEditingDetails(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleSaveVideoDetails}>Save changes</Button>
+          </div>
+        </div>
+      )}
 
       <PremiumModal
         isOpen={showPremiumModal}

@@ -121,7 +121,7 @@ const SearchResult = ({ query }: any) => {
                     </span>
                   </Link>
 
-                  <p className="text-sm text-gray-700 dark:text-gray-300 line-clamp-2">
+                  <p className="text-sm text-gray-700 dark:text-gray-300 line-clamp-2 whitespace-pre-wrap break-words">
                     {item.description || "No description available."}
                   </p>
                 </div>

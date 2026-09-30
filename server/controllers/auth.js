@@ -165,20 +165,47 @@ export const verifyOTP = async (req, res) => {
 export const updateProfile = async (req, res) => {
   const { id: _id } = req.params;
   const { channelName, description } = req.body;
+
   if (!mongoose.Types.ObjectId.isValid(_id)) {
-    return res.status(404).json({ message: " User unavailable..." });
+    return res.status(404).json({ message: "User unavailable..." });
   }
+
+  const sanitizeText = (value) => {
+    if (typeof value !== "string") return undefined;
+    const trimmed = value.trim();
+    return trimmed.length > 0 ? trimmed : undefined;
+  };
+
+  const nextChannelName = sanitizeText(channelName);
+  const nextDescription = sanitizeText(description);
+
+  if (nextChannelName === undefined && nextDescription === undefined) {
+    return res.status(400).json({ message: "No valid updates provided" });
+  }
+
   try {
-    const updatedData = await users.findByIdAndUpdate(
-      _id,
-      {
-        $set: {
-          channelName: channelName,
-          description: description,
-        },
-      },
-      { new: true },
-    );
+    const updateFields = {};
+
+    if (nextChannelName !== undefined) {
+      updateFields.channelName = nextChannelName;
+    }
+
+    if (nextDescription !== undefined) {
+      updateFields.description = nextDescription;
+    }
+
+    const updatedData = await users
+      .findByIdAndUpdate(
+        _id,
+        { $set: updateFields },
+        { new: true },
+      )
+      .select("name channelName description image joinedOn createdAt");
+
+    if (!updatedData) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
     return res.status(200).json({ updatedData });
   } catch (error) {
     console.error(error);

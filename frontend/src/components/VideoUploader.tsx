@@ -20,6 +20,7 @@ const VideoUploader = ({
   const [uploadProgress, setUploadProgress] = useState(0);
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [videoTitle, setVideoTitle] = useState("");
+  const [videoDescription, setVideoDescription] = useState("");
   const [videoDuration, setVideoDuration] = useState<number>(0);
   const [uploadComplete, setUploadComplete] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -55,6 +56,7 @@ const VideoUploader = ({
   const resetForm = () => {
     setVideoFile(null);
     setVideoTitle("");
+    setVideoDescription("");
     setVideoDuration(0);
     setIsUploading(false);
     setUploadProgress(0);
@@ -79,6 +81,7 @@ const VideoUploader = ({
     const formData = new FormData();
     formData.append("file", videoFile);
     formData.append("videotitle", videoTitle);
+    formData.append("description", videoDescription);
     formData.append("videochannel", channelName || "");
     formData.append("uploader", channelId);
     formData.append("duration", videoDuration.toString());
@@ -174,6 +177,18 @@ const VideoUploader = ({
                     placeholder="Add a title that describes your video"
                     disabled={isUploading || uploadComplete}
                     className="mt-1"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="description">Description</Label>
+                  <textarea
+                    id="description"
+                    value={videoDescription}
+                    onChange={(e) => setVideoDescription(e.target.value)}
+                    placeholder="Tell viewers about your video"
+                    disabled={isUploading || uploadComplete}
+                    className="mt-1 flex min-h-[80px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-gray-800"
                   />
                 </div>
               </div>
