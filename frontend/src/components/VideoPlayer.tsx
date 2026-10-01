@@ -10,6 +10,7 @@ const VideoPlayer = ({
   video,
   onNextVideo,
   onShowComments,
+  roomId,
 }: VideoPlayerProps) => {
   const {
     videoRef,
@@ -17,7 +18,6 @@ const VideoPlayer = ({
     isModalOpen,
     setIsModalOpen,
     isPlaying,
-    setIsPlaying,
     currentTime,
     duration,
     volume,
@@ -29,6 +29,8 @@ const VideoPlayer = ({
     isFullscreen,
     qualityOptions,
     togglePlayback,
+    handlePlay,
+    handlePause,
     handleProgressChange,
     handleVolumeChange,
     handlePlaybackRateChange,
@@ -43,7 +45,7 @@ const VideoPlayer = ({
     handleError,
     toggleFullscreen,
     handleOverlayClick,
-  } = useVideoPlayer({ video, onNextVideo, onShowComments });
+  } = useVideoPlayer({ video, onNextVideo, onShowComments, roomId });
 
   return (
     <>
@@ -62,9 +64,9 @@ const VideoPlayer = ({
           onCanPlay={handleCanPlay}
           onDurationChange={handleDurationChange}
           onError={handleError}
-          onPlay={() => setIsPlaying(true)}
+          onPlay={handlePlay}
           onPlaying={handlePlaying}
-          onPause={() => setIsPlaying(false)}
+          onPause={handlePause}
           onVolumeChange={handleMediaVolumeChange}
           playsInline
         >

@@ -31,6 +31,7 @@ const io = new Server(httpServer, {
 
 const users = {};
 const socketToRoom = {};
+const watchStates = {};
 
 io.on("connection", (socket) => {
   socket.on("join-room", (roomId) => {
@@ -60,6 +61,58 @@ io.on("connection", (socket) => {
     socket.to(roomId).emit("sync-seek", time);
   });
 
+  socket.on("watch-join", ({ roomId }) => {
+    const watchRoom = `watch:${roomId}`;
+    socket.join(watchRoom);
+    socketToRoom[socket.id] = watchRoom;
+
+    if (!watchStates[watchRoom]) {
+      watchStates[watchRoom] = {
+        time: 0,
+        isPlaying: false,
+        playbackRate: 1,
+      };
+    }
+
+    socket.emit("watch-state", watchStates[watchRoom]);
+  });
+
+  socket.on("watch-play", ({ roomId, time }) => {
+    const watchRoom = `watch:${roomId}`;
+    if (!watchStates[watchRoom]) return;
+    watchStates[watchRoom] = {
+      ...watchStates[watchRoom],
+      time: Number(time) || 0,
+      isPlaying: true,
+    };
+    socket.to(watchRoom).emit("watch-play", { time: watchStates[watchRoom].time });
+  });
+
+  socket.on("watch-pause", ({ roomId, time }) => {
+    const watchRoom = `watch:${roomId}`;
+    if (!watchStates[watchRoom]) return;
+    watchStates[watchRoom] = {
+      ...watchStates[watchRoom],
+      time: Number(time) || 0,
+      isPlaying: false,
+    };
+    socket.to(watchRoom).emit("watch-pause", { time: watchStates[watchRoom].time });
+  });
+
+  socket.on("watch-seek", ({ roomId, time }) => {
+    const watchRoom = `watch:${roomId}`;
+    if (!watchStates[watchRoom]) return;
+    watchStates[watchRoom].time = Number(time) || 0;
+    socket.to(watchRoom).emit("watch-seek", { time: watchStates[watchRoom].time });
+  });
+
+  socket.on("watch-rate", ({ roomId, rate }) => {
+    const watchRoom = `watch:${roomId}`;
+    if (!watchStates[watchRoom]) return;
+    watchStates[watchRoom].playbackRate = Number(rate) || 1;
+    socket.to(watchRoom).emit("watch-rate", { rate: watchStates[watchRoom].playbackRate });
+  });
+
   socket.on("sending-signal", (payload) => {
     io.to(payload.userToSignal).emit("user-joined", {
       signal: payload.signal,
@@ -83,6 +136,9 @@ io.on("connection", (socket) => {
       if (users[roomId].length === 0) {
         delete users[roomId];
       }
+    }
+    if (roomId?.startsWith("watch:") && io.sockets.adapter.rooms.get(roomId)?.size <= 1) {
+      delete watchStates[roomId];
     }
     delete socketToRoom[socket.id];
     console.log("User disconnected:", socket.id);

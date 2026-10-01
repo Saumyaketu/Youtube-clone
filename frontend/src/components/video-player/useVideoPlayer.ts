@@ -1,6 +1,7 @@
 import { startTransition, useEffect, useRef, useState } from "react";
 import type { ChangeEvent, MouseEvent } from "react";
 import { useRouter } from "next/navigation";
+import io, { type Socket } from "socket.io-client";
 import { useUser } from "../../lib/AuthContext";
 import axiosInstance from "../../lib/AxiosInstance";
 import { getOriginalVideoUrl, getQualityOptions } from "./utils";
@@ -17,12 +18,14 @@ type UseVideoPlayerOptions = {
   video: VideoData;
   onNextVideo?: () => void;
   onShowComments?: () => void;
+  roomId?: string | null;
 };
 
 export const useVideoPlayer = ({
   video,
   onNextVideo,
   onShowComments,
+  roomId,
 }: UseVideoPlayerOptions) => {
   const { user } = useUser();
   const router = useRouter();
@@ -47,6 +50,9 @@ export const useVideoPlayer = ({
   const resumeAfterSourceChangeRef = useRef(false);
   const clickCountRef = useRef(0);
   const clickTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const watchSocketRef = useRef<Socket | null>(null);
+  const applyingRemoteStateRef = useRef(false);
+  const playbackRateRef = useRef(1);
 
   const qualityOptions = getQualityOptions(video, playableSrc);
 
@@ -133,6 +139,93 @@ export const useVideoPlayer = ({
       document.removeEventListener("fullscreenchange", handleFullscreenChange);
   }, []);
 
+  useEffect(() => {
+    if (!roomId) return;
+
+    const socket = io(process.env.NEXT_PUBLIC_SOCKET_URL || "", {
+      transports: ["polling", "websocket"],
+      secure: true,
+    });
+    watchSocketRef.current = socket;
+
+    const applyPlaybackState = (state: {
+      time: number;
+      isPlaying: boolean;
+      playbackRate: number;
+    }) => {
+      const player = videoRef.current;
+      if (!player) return;
+
+      applyingRemoteStateRef.current = true;
+      player.currentTime = Math.max(0, state.time);
+      player.playbackRate = state.playbackRate;
+      setCurrentTime(player.currentTime);
+      setPlaybackRate(state.playbackRate);
+
+      if (state.isPlaying) {
+        void player.play().catch(() => {
+          applyingRemoteStateRef.current = false;
+        });
+      } else {
+        player.pause();
+      }
+
+      window.setTimeout(() => {
+        applyingRemoteStateRef.current = false;
+      }, 0);
+    };
+
+    socket.on("connect", () => {
+      socket.emit("watch-join", { roomId });
+    });
+    socket.on("watch-state", applyPlaybackState);
+    socket.on("watch-play", ({ time }: { time: number }) => {
+      applyPlaybackState({
+        time,
+        isPlaying: true,
+        playbackRate: playbackRateRef.current,
+      });
+    });
+    socket.on("watch-pause", ({ time }: { time: number }) => {
+      applyPlaybackState({
+        time,
+        isPlaying: false,
+        playbackRate: playbackRateRef.current,
+      });
+    });
+    socket.on("watch-seek", ({ time }: { time: number }) => {
+      const player = videoRef.current;
+      if (!player) return;
+      applyingRemoteStateRef.current = true;
+      player.currentTime = Math.max(0, time);
+      setCurrentTime(player.currentTime);
+      window.setTimeout(() => {
+        applyingRemoteStateRef.current = false;
+      }, 0);
+    });
+    socket.on("watch-rate", ({ rate }: { rate: number }) => {
+      const player = videoRef.current;
+      if (!player) return;
+      applyingRemoteStateRef.current = true;
+      player.playbackRate = rate;
+      setPlaybackRate(rate);
+      window.setTimeout(() => {
+        applyingRemoteStateRef.current = false;
+      }, 0);
+    });
+
+    return () => {
+      socket.disconnect();
+      watchSocketRef.current = null;
+    };
+  }, [roomId]);
+
+  const emitWatchEvent = (event: string, payload: Record<string, number>) => {
+    if (roomId && !applyingRemoteStateRef.current) {
+      watchSocketRef.current?.emit(event, { roomId, ...payload });
+    }
+  };
+
   const handleTimeUpdate = () => {
     if (!videoRef.current) return;
 
@@ -167,14 +260,18 @@ export const useVideoPlayer = ({
 
   const togglePlayback = () => {
     if (!videoRef.current) return;
-    if (videoRef.current.paused) void videoRef.current.play();
-    else videoRef.current.pause();
+    if (videoRef.current.paused) {
+      void videoRef.current.play();
+    } else {
+      videoRef.current.pause();
+    }
   };
 
   const handleProgressChange = (event: ChangeEvent<HTMLInputElement>) => {
     const nextTime = Number(event.target.value);
     if (videoRef.current) videoRef.current.currentTime = nextTime;
     setCurrentTime(nextTime);
+    emitWatchEvent("watch-seek", { time: nextTime });
   };
 
   const handleVolumeChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -184,8 +281,32 @@ export const useVideoPlayer = ({
   };
 
   const handlePlaybackRateChange = (rate: number) => {
+    playbackRateRef.current = rate;
     setPlaybackRate(rate);
     if (videoRef.current) videoRef.current.playbackRate = rate;
+    emitWatchEvent("watch-rate", { rate });
+  };
+
+  const handlePlay = () => {
+    setIsPlaying(true);
+    if (applyingRemoteStateRef.current) {
+      applyingRemoteStateRef.current = false;
+      return;
+    }
+    if (videoRef.current) {
+      emitWatchEvent("watch-play", { time: videoRef.current.currentTime });
+    }
+  };
+
+  const handlePause = () => {
+    setIsPlaying(false);
+    if (applyingRemoteStateRef.current) {
+      applyingRemoteStateRef.current = false;
+      return;
+    }
+    if (videoRef.current) {
+      emitWatchEvent("watch-pause", { time: videoRef.current.currentTime });
+    }
   };
 
   const handleMediaVolumeChange = () => {
@@ -269,11 +390,13 @@ export const useVideoPlayer = ({
         videoRef.current.duration,
         videoRef.current.currentTime + 10,
       );
+      emitWatchEvent("watch-seek", { time: videoRef.current.currentTime });
     } else if (clicks === 2 && zone === "left") {
       videoRef.current.currentTime = Math.max(
         0,
         videoRef.current.currentTime - 10,
       );
+      emitWatchEvent("watch-seek", { time: videoRef.current.currentTime });
     } else if (clicks === 3 && zone === "middle") onNextVideo?.();
     else if (clicks === 3 && zone === "right") router.push("/");
     else if (clicks === 3 && zone === "left") onShowComments?.();
@@ -316,6 +439,8 @@ export const useVideoPlayer = ({
     isFullscreen,
     qualityOptions,
     togglePlayback,
+    handlePlay,
+    handlePause,
     handleProgressChange,
     handleVolumeChange,
     handlePlaybackRateChange,
