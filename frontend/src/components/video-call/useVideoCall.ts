@@ -63,7 +63,9 @@ export function useVideoCall(roomId: string): UseVideoCallResult {
     ];
 
     const addPeerToState = (peerID: string, peer: Peer.Instance) => {
-      peersRef.current.push({ peerID, peer });
+      if (!peersRef.current.some((item) => item.peerID === peerID)) {
+        peersRef.current.push({ peerID, peer });
+      }
       setPeers((current) =>
         current.some((item) => item.peerID === peerID)
           ? current
@@ -76,6 +78,9 @@ export function useVideoCall(roomId: string): UseVideoCallResult {
       peer.on("signal", (signal) => {
         socketRef.current?.emit("sending-signal", { userToSignal, callerID, signal });
       });
+      peer.on("stream", (remoteStream) => {
+        (peer as Peer.Instance & { _remoteStream?: MediaStream })._remoteStream = remoteStream;
+      });
       return peer;
     };
 
@@ -83,6 +88,9 @@ export function useVideoCall(roomId: string): UseVideoCallResult {
       const peer = new Peer({ initiator: false, trickle: true, stream: localStream, config: { iceServers } });
       peer.on("signal", (signal) => {
         socketRef.current?.emit("returning-signal", { signal, callerID });
+      });
+      peer.on("stream", (remoteStream) => {
+        (peer as Peer.Instance & { _remoteStream?: MediaStream })._remoteStream = remoteStream;
       });
       peer.signal(incomingSignal);
       return peer;
@@ -103,9 +111,10 @@ export function useVideoCall(roomId: string): UseVideoCallResult {
         setStream(localStream);
         if (myVideo.current) myVideo.current.srcObject = localStream;
 
-        const socket = io(process.env.NEXT_PUBLIC_SOCKET_URL || "", {
+        const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || "";
+        const socket = io(socketUrl, {
           transports: ["polling", "websocket"],
-          secure: true,
+          secure: socketUrl.startsWith("https"),
         });
         socketRef.current = socket;
         socket.on("connect", () => socket.emit("join-room", `call:${roomId}`));
@@ -162,6 +171,14 @@ export function useVideoCall(roomId: string): UseVideoCallResult {
     };
   }, [roomId]);
 
+  useEffect(() => {
+    if (myVideo.current && stream && !isScreenSharing) {
+      if (myVideo.current.srcObject !== stream) {
+        myVideo.current.srcObject = stream;
+      }
+    }
+  }, [stream, isScreenSharing]);
+
   const toggleMute = () => {
     const track = stream?.getAudioTracks()[0];
     if (!track) return;
@@ -180,8 +197,17 @@ export function useVideoCall(roomId: string): UseVideoCallResult {
     if (!stream) return;
     const localVideoTrack = stream.getVideoTracks()[0];
     const screenStream = myVideo.current?.srcObject as MediaStream | null;
+    const screenVideoTrack = screenStream?.getVideoTracks()[0];
     if (screenStream && screenStream !== stream) screenStream.getTracks().forEach((track) => track.stop());
     peersRef.current.forEach(({ peer }) => {
+      try {
+        if (screenVideoTrack && localVideoTrack) {
+          peer.replaceTrack(screenVideoTrack, localVideoTrack, stream);
+          return;
+        }
+      } catch {
+        // Fallback below
+      }
       const connection = (peer as Peer.Instance & { _pc?: RTCPeerConnection })._pc;
       const sender = connection?.getSenders().find((item) => item.track?.kind === "video");
       if (sender) void sender.replaceTrack(localVideoTrack);
@@ -267,7 +293,11 @@ export function useVideoCall(roomId: string): UseVideoCallResult {
     const canvasStream = canvas.captureStream(30);
     const audioContext = new AudioContext();
     const destination = audioContext.createMediaStreamDestination();
-    [stream, ...peersRef.current.flatMap(({ peer }) => peer.streams || [])].forEach((audioStream) => {
+    const remoteAudioStreams = peersRef.current
+      .map(({ peer }) => (peer as Peer.Instance & { _remoteStream?: MediaStream })._remoteStream || peer.streams?.[0])
+      .filter((s): s is MediaStream => Boolean(s));
+
+    [stream, ...remoteAudioStreams].forEach((audioStream) => {
       if (audioStream.getAudioTracks().length > 0) audioContext.createMediaStreamSource(audioStream).connect(destination);
     });
     const recordingStream = new MediaStream([...canvasStream.getVideoTracks(), ...destination.stream.getAudioTracks()]);

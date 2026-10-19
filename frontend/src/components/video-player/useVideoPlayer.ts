@@ -51,7 +51,7 @@ export const useVideoPlayer = ({
   const clickCountRef = useRef(0);
   const clickTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const watchSocketRef = useRef<Socket | null>(null);
-  const applyingRemoteStateRef = useRef(false);
+  const remoteEventsPendingRef = useRef(0);
   const playbackRateRef = useRef(1);
 
   const qualityOptions = getQualityOptions(video, playableSrc);
@@ -142,9 +142,10 @@ export const useVideoPlayer = ({
   useEffect(() => {
     if (!roomId) return;
 
-    const socket = io(process.env.NEXT_PUBLIC_SOCKET_URL || "", {
+    const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || "";
+    const socket = io(socketUrl, {
       transports: ["polling", "websocket"],
-      secure: true,
+      secure: socketUrl.startsWith("https"),
     });
     watchSocketRef.current = socket;
 
@@ -156,7 +157,7 @@ export const useVideoPlayer = ({
       const player = videoRef.current;
       if (!player) return;
 
-      applyingRemoteStateRef.current = true;
+      remoteEventsPendingRef.current += 1;
       player.currentTime = Math.max(0, state.time);
       player.playbackRate = state.playbackRate;
       setCurrentTime(player.currentTime);
@@ -164,15 +165,11 @@ export const useVideoPlayer = ({
 
       if (state.isPlaying) {
         void player.play().catch(() => {
-          applyingRemoteStateRef.current = false;
+          remoteEventsPendingRef.current = Math.max(0, remoteEventsPendingRef.current - 1);
         });
       } else {
         player.pause();
       }
-
-      window.setTimeout(() => {
-        applyingRemoteStateRef.current = false;
-      }, 0);
     };
 
     socket.on("connect", () => {
@@ -196,22 +193,14 @@ export const useVideoPlayer = ({
     socket.on("watch-seek", ({ time }: { time: number }) => {
       const player = videoRef.current;
       if (!player) return;
-      applyingRemoteStateRef.current = true;
       player.currentTime = Math.max(0, time);
       setCurrentTime(player.currentTime);
-      window.setTimeout(() => {
-        applyingRemoteStateRef.current = false;
-      }, 0);
     });
     socket.on("watch-rate", ({ rate }: { rate: number }) => {
       const player = videoRef.current;
       if (!player) return;
-      applyingRemoteStateRef.current = true;
       player.playbackRate = rate;
       setPlaybackRate(rate);
-      window.setTimeout(() => {
-        applyingRemoteStateRef.current = false;
-      }, 0);
     });
 
     return () => {
@@ -221,7 +210,7 @@ export const useVideoPlayer = ({
   }, [roomId]);
 
   const emitWatchEvent = (event: string, payload: Record<string, number>) => {
-    if (roomId && !applyingRemoteStateRef.current) {
+    if (roomId) {
       watchSocketRef.current?.emit(event, { roomId, ...payload });
     }
   };
@@ -289,8 +278,8 @@ export const useVideoPlayer = ({
 
   const handlePlay = () => {
     setIsPlaying(true);
-    if (applyingRemoteStateRef.current) {
-      applyingRemoteStateRef.current = false;
+    if (remoteEventsPendingRef.current > 0) {
+      remoteEventsPendingRef.current -= 1;
       return;
     }
     if (videoRef.current) {
@@ -300,8 +289,8 @@ export const useVideoPlayer = ({
 
   const handlePause = () => {
     setIsPlaying(false);
-    if (applyingRemoteStateRef.current) {
-      applyingRemoteStateRef.current = false;
+    if (remoteEventsPendingRef.current > 0) {
+      remoteEventsPendingRef.current -= 1;
       return;
     }
     if (videoRef.current) {
